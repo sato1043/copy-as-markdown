@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="WEB_MODULE" version="4">
   <component name="Go" enabled="true" />
-  <component name="NewModuleRootManager">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/chrome/dist/images" />
       <excludeFolder url="file://$MODULE_DIR$/chrome/dist/lib" />
@@ -15,6 +16,10 @@
       <excludeFolder url="file://$MODULE_DIR$/chrome/dist" />
       <excludeFolder url="file://$MODULE_DIR$/firefox-mv3/dist" />
       <excludeFolder url="file://$MODULE_DIR$/firefox/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/.claude" />
+      <excludeFolder url="file://$MODULE_DIR$/.serena" />
+      <excludeFolder url="file://$MODULE_DIR$/.idea" />
+      <excludeFolder url="file://$MODULE_DIR$/.vscode" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
