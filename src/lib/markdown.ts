@@ -15,6 +15,7 @@ export default class Markdown {
   alwaysEscapeLinkBracket: boolean;
   unorderedListStyle: UnorderedListStyle;
   indentationStyle: TabGroupIndentationStyle;
+  extractBracketedPrefix: boolean;
 
   static DefaultTitle(): string {
     return '(No Title)';
@@ -24,10 +25,12 @@ export default class Markdown {
     alwaysEscapeLinkBracket = false,
     unorderedListStyle = UnorderedListStyle.Dash,
     indentationStyle = TabGroupIndentationStyle.Spaces,
+    extractBracketedPrefix = false,
   } = {}) {
     this.alwaysEscapeLinkBracket = alwaysEscapeLinkBracket;
     this.unorderedListStyle = unorderedListStyle;
     this.indentationStyle = indentationStyle;
+    this.extractBracketedPrefix = extractBracketedPrefix;
   }
 
   /**
@@ -115,13 +118,23 @@ export default class Markdown {
   }
 
   linkTo(title: string, url: string): string {
-    let titleToUse: string;
     if (title === '') {
-      titleToUse = Markdown.DefaultTitle();
-    } else {
-      titleToUse = this.escapeLinkText(title);
+      return `[${Markdown.DefaultTitle()}](${url})`;
     }
-    return `[${titleToUse}](${url})`;
+
+    if (this.extractBracketedPrefix) {
+      // 先頭の [xxx] パターンを抽出し、残りをテキストとして追加
+      // 例: [JIRA-1234] Some Feature Title → [JIRA-1234](url) Some Feature Title
+      const pattern = /^\[([^\]]+)\]\s*(.*)/;
+      const match = title.match(pattern);
+      if (match && match[1]) {
+        const prefixText = this.escapeLinkText(match[1]);
+        const remainder = match[2] ? ` ${match[2]}` : '';
+        return `[${prefixText}](${url})${remainder}`;
+      }
+    }
+
+    return `[${this.escapeLinkText(title)}](${url})`;
   }
 
   static imageFor(title: string, url: string): string {

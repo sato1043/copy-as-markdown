@@ -99,4 +99,58 @@ describe('markdown', () => {
       });
     });
   });
+
+  describe('linkTo()', () => {
+    const markdown = new Markdown();
+
+    it('returns default title when title is empty', () => {
+      expect(markdown.linkTo('', 'https://example.com')).toBe('[(No Title)](https://example.com)');
+    });
+
+    it('returns normal link for regular title', () => {
+      expect(markdown.linkTo('Some Title', 'https://example.com')).toBe('[Some Title](https://example.com)');
+    });
+
+    describe('extractBracketedPrefix=true', () => {
+      const markdownExtract = new Markdown({ extractBracketedPrefix: true });
+
+      it('extracts [xxx] and appends remainder as text', () => {
+        expect(markdownExtract.linkTo('[JIRA-1234] Some Title', 'https://example.com')).toBe('[JIRA-1234](https://example.com) Some Title');
+      });
+
+      it('extracts [xxx] when title is exactly the pattern', () => {
+        expect(markdownExtract.linkTo('[JIRA-999]', 'https://example.com')).toBe('[JIRA-999](https://example.com)');
+      });
+
+      it('handles various prefix formats', () => {
+        expect(markdownExtract.linkTo('[PROJ-12345] Long Issue Title', 'https://example.com')).toBe('[PROJ-12345](https://example.com) Long Issue Title');
+        expect(markdownExtract.linkTo('[TICKET-1] Fix bug', 'https://example.com')).toBe('[TICKET-1](https://example.com) Fix bug');
+        expect(markdownExtract.linkTo('[ABC] Simple', 'https://example.com')).toBe('[ABC](https://example.com) Simple');
+      });
+
+      it('does not extract when bracket is not at the start', () => {
+        // Balanced brackets are not escaped when alwaysEscapeLinkBracket=false (default)
+        expect(markdownExtract.linkTo('Not [JIRA-1234] Title', 'https://example.com')).toBe('[Not [JIRA-1234] Title](https://example.com)');
+      });
+
+      it('only extracts first bracketed prefix', () => {
+        expect(markdownExtract.linkTo('[PROJ-1] [JIRA-2] Title', 'https://example.com')).toBe('[PROJ-1](https://example.com) [JIRA-2] Title');
+      });
+
+      it('handles title without brackets normally', () => {
+        expect(markdownExtract.linkTo('Some Title', 'https://example.com')).toBe('[Some Title](https://example.com)');
+      });
+    });
+
+    describe('extractBracketedPrefix=false (default)', () => {
+      it('does not extract bracketed prefix when disabled', () => {
+        // Balanced brackets are not escaped when alwaysEscapeLinkBracket=false (default)
+        expect(markdown.linkTo('[JIRA-1234] Some Title', 'https://example.com')).toBe('[[JIRA-1234] Some Title](https://example.com)');
+      });
+
+      it('still handles empty title', () => {
+        expect(markdown.linkTo('', 'https://example.com')).toBe('[(No Title)](https://example.com)');
+      });
+    });
+  });
 });

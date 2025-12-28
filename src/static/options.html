@@ -109,6 +109,18 @@
             so that Copy as Markdown always escape brackets in the link text.
           </p>
         </form>
+
+        <form id="form-extract-bracketed-prefix" class="field">
+          <label class="label">Bracketed Prefix Extraction</label>
+          <div class="control">
+            <label class="checkbox"><input type="checkbox" name="extractBracketedPrefix"/> Extract bracketed prefix from page title</label>
+          </div>
+          <p class="help">
+            When enabled, if a page title starts with <code>[xxx]</code> (e.g. <code>[JIRA-1234] Some Feature Title</code>),
+            the bracketed text becomes the link text and the remainder is appended as plain text:
+            <code>[JIRA-1234](url) Some Feature Title</code>
+          </p>
+        </form>
       </div>
       <div class="field is-grouped">
         <div class="control">

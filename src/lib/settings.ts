@@ -5,11 +5,13 @@ const SKLinkTextAlwaysEscapeBrackets = 'linkTextAlwaysEscapeBrackets';
 // [sic.] The following keys have spaces at the end since they were introduced (typo). Do not modify.
 const SKStyleOfUnorderedList = 'styleOfUnorderedList ';
 const SKStyleTabGroupIndentation = 'style.tabgroup.indentation ';
+const SKExtractBracketedPrefix = 'extractBracketedPrefix';
 
 interface Settings {
   alwaysEscapeLinkBrackets: boolean;
   styleOfUnorderedList: UnorderedListStyle;
   styleOfTabGroupIndentation: TabGroupIndentationStyle;
+  extractBracketedPrefix: boolean;
 }
 
 /**
@@ -19,12 +21,14 @@ export default {
   SKLinkTextAlwaysEscapeBrackets,
   SKStyleOfUnorderedList,
   SKStyleTabGroupIndentation,
+  SKExtractBracketedPrefix,
 
   get defaultSettings(): Record<string, unknown> {
     return {
       [SKLinkTextAlwaysEscapeBrackets]: false,
       [SKStyleOfUnorderedList]: UnorderedListStyle.Dash,
       [SKStyleTabGroupIndentation]: TabGroupIndentationStyle.Spaces,
+      [SKExtractBracketedPrefix]: false,
     };
   },
 
@@ -50,6 +54,12 @@ export default {
     });
   },
 
+  async setExtractBracketedPrefix(value: boolean): Promise<void> {
+    await browser.storage.sync.set({
+      [SKExtractBracketedPrefix]: value,
+    });
+  },
+
   async reset(): Promise<void> {
     await browser.storage.sync.remove(this.keys);
   },
@@ -61,6 +71,7 @@ export default {
       alwaysEscapeLinkBrackets: all[SKLinkTextAlwaysEscapeBrackets] as boolean,
       styleOfUnorderedList: all[SKStyleOfUnorderedList] as UnorderedListStyle,
       styleOfTabGroupIndentation: all[SKStyleTabGroupIndentation] as TabGroupIndentationStyle,
+      extractBracketedPrefix: all[SKExtractBracketedPrefix] as boolean,
     };
   },
 };

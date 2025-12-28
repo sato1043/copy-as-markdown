@@ -6,6 +6,7 @@ import {
 } from '../helpers';
 
 const QA_PAGE_URL = 'http://localhost:5566/qa.html';
+const JIRA_PAGE_URL = 'http://localhost:5566/jira-page.html';
 
 test.describe('On-Page contents', () => {
   test.beforeEach(async ({ page, serviceWorker }) => {
@@ -82,5 +83,28 @@ test.describe('On-Page contents', () => {
 
     const clipboardText = (await waitForMockClipboard(serviceWorker)).text;
     expect(clipboardText).toBe(`[![](${linkedImage.src})](${linkedImage.href})`);
+  });
+});
+
+test.describe('Bracketed prefix extraction', () => {
+  test.beforeEach(async ({ page, serviceWorker }) => {
+    await resetMockClipboard(serviceWorker);
+    // Enable bracketed prefix extraction setting (default is false)
+    await serviceWorker.evaluate(async () => {
+      await chrome.storage.sync.set({ extractBracketedPrefix: true });
+    });
+    // Wait for settings to be applied
+    await page.waitForTimeout(100);
+    await page.goto(JIRA_PAGE_URL);
+    await page.waitForLoadState('networkidle');
+  });
+
+  test('extracts [xxx] from page title and appends remainder', async ({ page, serviceWorker }) => {
+    await triggerContextMenu(serviceWorker, 'current-tab');
+
+    const clipboardText = (await waitForMockClipboard(serviceWorker)).text;
+    // Page title is "[JIRA-1234] Some Feature Title"
+    // JIRA-1234 becomes link text, remainder appended as plain text
+    expect(clipboardText).toBe(`[JIRA-1234](${page.url()}) Some Feature Title`);
   });
 });
