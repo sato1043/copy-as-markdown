@@ -44,6 +44,8 @@ export default defineConfig({
       testDir: './test/e2e',
       testIgnore: './test/e2e/clipboard',
       fullyParallel: true,
+      // Limit workers to reduce resource contention and timeout failures
+      workers: 4,
       use: {
         ...devices['Desktop Chrome'],
         // IMPORTANT: Must use 'chromium' channel for extensions to work
