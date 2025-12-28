@@ -8,6 +8,7 @@ const files = [
   { src: 'node_modules/@truto/turndown-plugin-gfm/lib/index.js', dest: 'turndown-plugin-gfm.mjs' },
   { src: 'node_modules/bulma/css/bulma.css', dest: 'bulma.css' },
   { src: 'node_modules/webextension-polyfill/dist/browser-polyfill.js', dest: 'browser-polyfill.js' },
+  { src: 'node_modules/webextension-polyfill/dist/browser-polyfill.js.map', dest: 'browser-polyfill.js.map' },
   { src: 'node_modules/mustache/mustache.mjs', dest: 'mustache.mjs' },
 ];
 
