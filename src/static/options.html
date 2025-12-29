@@ -121,6 +121,18 @@
             <code>[JIRA-1234](url) Some Feature Title</code>
           </p>
         </form>
+
+        <form id="form-trim-title-trailing-suffix" class="field">
+          <label class="label">Title Trailing Suffix Removal</label>
+          <div class="control">
+            <label class="checkbox"><input type="checkbox" name="trimTitleTrailingSuffix"/> Remove trailing suffix from page title</label>
+          </div>
+          <p class="help">
+            When enabled, the last occurrence of <code> - xxx</code> pattern is removed from the page title.
+            For example, <code>Article Title - Site Name</code> becomes <code>[Article Title](url)</code>.
+            This is applied before bracketed prefix extraction.
+          </p>
+        </form>
       </div>
       <div class="field is-grouped">
         <div class="control">

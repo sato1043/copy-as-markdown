@@ -99,12 +99,39 @@ test.describe('Bracketed prefix extraction', () => {
     await page.waitForLoadState('networkidle');
   });
 
-  test('extracts [xxx] from page title and appends remainder', async ({ page, serviceWorker }) => {
+  test('extracts [xxx] from page title and appends remainder (without suffix removal)', async ({ page, serviceWorker }) => {
     await triggerContextMenu(serviceWorker, 'current-tab');
 
     const clipboardText = (await waitForMockClipboard(serviceWorker)).text;
-    // Page title is "[JIRA-1234] Some Feature Title"
-    // JIRA-1234 becomes link text, remainder appended as plain text
+    // Page title is "[JIRA-1234] Some Feature Title - Jira"
+    // JIRA-1234 becomes link text, remainder (including suffix) appended as plain text
+    expect(clipboardText).toBe(`[JIRA-1234](${page.url()}) Some Feature Title - Jira`);
+  });
+});
+
+test.describe('Title trailing suffix removal with bracketed prefix extraction', () => {
+  test.beforeEach(async ({ page, serviceWorker }) => {
+    await resetMockClipboard(serviceWorker);
+    // Enable both settings
+    await serviceWorker.evaluate(async () => {
+      await chrome.storage.sync.set({
+        extractBracketedPrefix: true,
+        trimTitleTrailingSuffix: true,
+      });
+    });
+    // Wait for settings to be applied
+    await page.waitForTimeout(100);
+    await page.goto(JIRA_PAGE_URL);
+    await page.waitForLoadState('networkidle');
+  });
+
+  test('removes trailing suffix and extracts bracketed prefix', async ({ page, serviceWorker }) => {
+    await triggerContextMenu(serviceWorker, 'current-tab');
+
+    const clipboardText = (await waitForMockClipboard(serviceWorker)).text;
+    // Page title is "[JIRA-1234] Some Feature Title - Jira"
+    // 1. Suffix removal: "[JIRA-1234] Some Feature Title"
+    // 2. Bracket extraction: "[JIRA-1234](url) Some Feature Title"
     expect(clipboardText).toBe(`[JIRA-1234](${page.url()}) Some Feature Title`);
   });
 });

@@ -224,9 +224,12 @@ async exportLink(options: LinkExportOptions): Promise<string> {
 
 `Markdown.linkTo(title, url)`メソッドが以下を行う:
 1. タイトルが空の場合は`(No Title)`を使用
-2. **ブラケットプレフィックス抽出**: タイトルが`[xxx]`で始まる場合、その部分をリンクテキストとして抽出し、残りをプレーンテキストとして追加
-3. タイトル内の特殊文字をエスケープ（`[`, `]`など）
-4. `[title](url)`形式の文字列を生成
+2. **タイトル末尾サフィックス削除**: 最後の` - xxx`パターンを除去（オプション）
+3. **ブラケットプレフィックス抽出**: タイトルが`[xxx]`で始まる場合、その部分をリンクテキストとして抽出し、残りをプレーンテキストとして追加（オプション）
+4. タイトル内の特殊文字をエスケープ（`[`, `]`など）
+5. `[title](url)`形式の文字列を生成
+
+**処理順序**: サフィックス削除 → ブラケットプレフィックス抽出 → エスケープ → リンク生成
 
 #### ブラケットプレフィックス抽出機能
 
@@ -268,6 +271,47 @@ if (this.extractBracketedPrefix) {
 - UI: `src/static/options.html` - `form-extract-bracketed-prefix`
 - テスト: `test/markdown.test.ts` の `extractBracketedPrefix` セクション
 
+#### タイトル末尾サフィックス削除機能
+
+**ファイル**: `src/lib/markdown.ts:128-136`
+
+```typescript
+if (this.trimTitleTrailingSuffix) {
+  // 最後の " - xxx" パターンを除去
+  // 例: "記事タイトル - サイト名" → "記事タイトル"
+  processedTitle = title.replace(/\s+-\s[^-]*$/, '').trim();
+  if (processedTitle === '') {
+    return `[${Markdown.DefaultTitle()}](${url})`;
+  }
+}
+```
+
+**動作例** (`trimTitleTrailingSuffix=true`の場合):
+
+| ページタイトル | 出力 |
+|---------------|------|
+| `Article Title - Site Name` | `[Article Title](url)` |
+| `A - B - C` | `[A - B](url)` |
+| `Simple Title` | `[Simple Title](url)` |
+| `Title-Suffix` | `[Title-Suffix](url)` |
+
+**両オプション併用時の動作例** (`trimTitleTrailingSuffix=true`, `extractBracketedPrefix=true`):
+
+| ページタイトル | 出力 |
+|---------------|------|
+| `[JIRA-1234] Some Title - Jira` | `[JIRA-1234](url) Some Title` |
+| `[PROJ-999] Feature - Site` | `[PROJ-999](url) Feature` |
+
+**設定**:
+- オプションページ: 「Title Trailing Suffix Removal」チェックボックス
+- 設定キー: `trimTitleTrailingSuffix`（デフォルト: `false`）
+- パターン: `\s+-\s[^-]*$`（最後の` - xxx`にマッチ）
+
+**関連ファイル**:
+- 設定: `src/lib/settings.ts` - `SKTrimTitleTrailingSuffix`
+- UI: `src/static/options.html` - `form-trim-title-trailing-suffix`
+- テスト: `test/markdown.test.ts` の `trimTitleTrailingSuffix` セクション
+
 ## 関連するキーボードショートカット
 
 `KeyboardCommandIds.CurrentTabLink`が同等の機能を提供する。
@@ -276,4 +320,4 @@ if (this.extractBracketedPrefix) {
 
 ---
 
-*最終更新: 2025-12-28*
+*最終更新: 2025-12-29*

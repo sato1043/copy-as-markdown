@@ -30,6 +30,7 @@ async function loadSettings(): Promise<void> {
     const formUnorderedList = document.forms.namedItem('form-style-of-unordered-list');
     const formTabGroupIndentation = document.forms.namedItem('form-style-of-tab-group-indentation');
     const formExtractBracketedPrefix = document.forms.namedItem('form-extract-bracketed-prefix');
+    const formTrimTitleTrailingSuffix = document.forms.namedItem('form-trim-title-trailing-suffix');
 
     if (formEscapeBrackets) {
       const checkbox = formEscapeBrackets.elements.namedItem('enabled') as HTMLInputElement | null;
@@ -46,6 +47,10 @@ async function loadSettings(): Promise<void> {
     if (formExtractBracketedPrefix) {
       const checkbox = formExtractBracketedPrefix.elements.namedItem('extractBracketedPrefix') as HTMLInputElement | null;
       if (checkbox) checkbox.checked = settings.extractBracketedPrefix;
+    }
+    if (formTrimTitleTrailingSuffix) {
+      const checkbox = formTrimTitleTrailingSuffix.elements.namedItem('trimTitleTrailingSuffix') as HTMLInputElement | null;
+      if (checkbox) checkbox.checked = settings.trimTitleTrailingSuffix;
     }
     hideFlash();
   } catch (error) {
@@ -109,6 +114,20 @@ if (formExtractBracketedPrefix) {
     try {
       const target = event.target as HTMLInputElement;
       await Settings.setExtractBracketedPrefix(target.checked);
+      hideFlash();
+    } catch (error) {
+      console.error('failed to save settings:', error);
+      showFlash('Failed to save setting. Please try again.');
+    }
+  });
+}
+
+const formTrimTitleTrailingSuffix = document.forms.namedItem('form-trim-title-trailing-suffix');
+if (formTrimTitleTrailingSuffix) {
+  formTrimTitleTrailingSuffix.addEventListener('change', async (event) => {
+    try {
+      const target = event.target as HTMLInputElement;
+      await Settings.setTrimTitleTrailingSuffix(target.checked);
       hideFlash();
     } catch (error) {
       console.error('failed to save settings:', error);

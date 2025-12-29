@@ -152,5 +152,50 @@ describe('markdown', () => {
         expect(markdown.linkTo('', 'https://example.com')).toBe('[(No Title)](https://example.com)');
       });
     });
+
+    describe('trimTitleTrailingSuffix=true', () => {
+      const markdownTrim = new Markdown({ trimTitleTrailingSuffix: true });
+
+      it('removes trailing suffix with " - "', () => {
+        expect(markdownTrim.linkTo('Article Title - Site Name', 'https://example.com')).toBe('[Article Title](https://example.com)');
+      });
+
+      it('removes only the last " - " occurrence', () => {
+        expect(markdownTrim.linkTo('A - B - C', 'https://example.com')).toBe('[A - B](https://example.com)');
+      });
+
+      it('handles title without suffix', () => {
+        expect(markdownTrim.linkTo('Simple Title', 'https://example.com')).toBe('[Simple Title](https://example.com)');
+      });
+
+      it('handles empty result after trimming', () => {
+        // If the entire title is " - xxx", it becomes empty and uses default title
+        expect(markdownTrim.linkTo(' - Site', 'https://example.com')).toBe('[(No Title)](https://example.com)');
+      });
+
+      it('requires spaces around hyphen', () => {
+        // "Title-Suffix" should not be trimmed (no spaces)
+        expect(markdownTrim.linkTo('Title-Suffix', 'https://example.com')).toBe('[Title-Suffix](https://example.com)');
+      });
+    });
+
+    describe('trimTitleTrailingSuffix=true with extractBracketedPrefix=true', () => {
+      const markdownBoth = new Markdown({ trimTitleTrailingSuffix: true, extractBracketedPrefix: true });
+
+      it('applies suffix removal before bracket extraction', () => {
+        // [JIRA-1234] Some Title - Site → [JIRA-1234] Some Title → [JIRA-1234](url) Some Title
+        expect(markdownBoth.linkTo('[JIRA-1234] Some Title - Site', 'https://example.com')).toBe('[JIRA-1234](https://example.com) Some Title');
+      });
+
+      it('handles JIRA-style title with trailing suffix', () => {
+        expect(markdownBoth.linkTo('[JIRA-1234] Some Feature Title - Jira', 'https://example.com')).toBe('[JIRA-1234](https://example.com) Some Feature Title');
+      });
+    });
+
+    describe('trimTitleTrailingSuffix=false (default)', () => {
+      it('does not remove trailing suffix when disabled', () => {
+        expect(markdown.linkTo('Article Title - Site Name', 'https://example.com')).toBe('[Article Title - Site Name](https://example.com)');
+      });
+    });
   });
 });

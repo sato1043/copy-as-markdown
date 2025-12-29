@@ -86,6 +86,7 @@ async function refreshMarkdownInstance(): Promise<void> {
   markdownInstance.unorderedListStyle = settings.styleOfUnorderedList;
   markdownInstance.indentationStyle = settings.styleOfTabGroupIndentation;
   markdownInstance.extractBracketedPrefix = settings.extractBracketedPrefix;
+  markdownInstance.trimTitleTrailingSuffix = settings.trimTitleTrailingSuffix;
 }
 
 browser.alarms.onAlarm.addListener(async (alarm) => {

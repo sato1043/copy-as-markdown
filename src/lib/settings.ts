@@ -6,12 +6,14 @@ const SKLinkTextAlwaysEscapeBrackets = 'linkTextAlwaysEscapeBrackets';
 const SKStyleOfUnorderedList = 'styleOfUnorderedList ';
 const SKStyleTabGroupIndentation = 'style.tabgroup.indentation ';
 const SKExtractBracketedPrefix = 'extractBracketedPrefix';
+const SKTrimTitleTrailingSuffix = 'trimTitleTrailingSuffix';
 
 interface Settings {
   alwaysEscapeLinkBrackets: boolean;
   styleOfUnorderedList: UnorderedListStyle;
   styleOfTabGroupIndentation: TabGroupIndentationStyle;
   extractBracketedPrefix: boolean;
+  trimTitleTrailingSuffix: boolean;
 }
 
 /**
@@ -22,6 +24,7 @@ export default {
   SKStyleOfUnorderedList,
   SKStyleTabGroupIndentation,
   SKExtractBracketedPrefix,
+  SKTrimTitleTrailingSuffix,
 
   get defaultSettings(): Record<string, unknown> {
     return {
@@ -29,6 +32,7 @@ export default {
       [SKStyleOfUnorderedList]: UnorderedListStyle.Dash,
       [SKStyleTabGroupIndentation]: TabGroupIndentationStyle.Spaces,
       [SKExtractBracketedPrefix]: false,
+      [SKTrimTitleTrailingSuffix]: false,
     };
   },
 
@@ -60,6 +64,12 @@ export default {
     });
   },
 
+  async setTrimTitleTrailingSuffix(value: boolean): Promise<void> {
+    await browser.storage.sync.set({
+      [SKTrimTitleTrailingSuffix]: value,
+    });
+  },
+
   async reset(): Promise<void> {
     await browser.storage.sync.remove(this.keys);
   },
@@ -72,6 +82,7 @@ export default {
       styleOfUnorderedList: all[SKStyleOfUnorderedList] as UnorderedListStyle,
       styleOfTabGroupIndentation: all[SKStyleTabGroupIndentation] as TabGroupIndentationStyle,
       extractBracketedPrefix: all[SKExtractBracketedPrefix] as boolean,
+      trimTitleTrailingSuffix: all[SKTrimTitleTrailingSuffix] as boolean,
     };
   },
 };

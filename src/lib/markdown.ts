@@ -16,6 +16,7 @@ export default class Markdown {
   unorderedListStyle: UnorderedListStyle;
   indentationStyle: TabGroupIndentationStyle;
   extractBracketedPrefix: boolean;
+  trimTitleTrailingSuffix: boolean;
 
   static DefaultTitle(): string {
     return '(No Title)';
@@ -26,11 +27,13 @@ export default class Markdown {
     unorderedListStyle = UnorderedListStyle.Dash,
     indentationStyle = TabGroupIndentationStyle.Spaces,
     extractBracketedPrefix = false,
+    trimTitleTrailingSuffix = false,
   } = {}) {
     this.alwaysEscapeLinkBracket = alwaysEscapeLinkBracket;
     this.unorderedListStyle = unorderedListStyle;
     this.indentationStyle = indentationStyle;
     this.extractBracketedPrefix = extractBracketedPrefix;
+    this.trimTitleTrailingSuffix = trimTitleTrailingSuffix;
   }
 
   /**
@@ -122,11 +125,21 @@ export default class Markdown {
       return `[${Markdown.DefaultTitle()}](${url})`;
     }
 
+    // サフィックス削除: 最後の " - xxx" パターンを除去
+    // 例: "記事タイトル - サイト名" → "記事タイトル"
+    let processedTitle = title;
+    if (this.trimTitleTrailingSuffix) {
+      processedTitle = title.replace(/\s+-\s[^-]*$/, '').trim();
+      if (processedTitle === '') {
+        return `[${Markdown.DefaultTitle()}](${url})`;
+      }
+    }
+
     if (this.extractBracketedPrefix) {
       // 先頭の [xxx] パターンを抽出し、残りをテキストとして追加
       // 例: [JIRA-1234] Some Feature Title → [JIRA-1234](url) Some Feature Title
       const pattern = /^\[([^\]]+)\]\s*(.*)/;
-      const match = title.match(pattern);
+      const match = processedTitle.match(pattern);
       if (match && match[1]) {
         const prefixText = this.escapeLinkText(match[1]);
         const remainder = match[2] ? ` ${match[2]}` : '';
@@ -134,7 +147,7 @@ export default class Markdown {
       }
     }
 
-    return `[${this.escapeLinkText(title)}](${url})`;
+    return `[${this.escapeLinkText(processedTitle)}](${url})`;
   }
 
   static imageFor(title: string, url: string): string {
