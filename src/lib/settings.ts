@@ -10,6 +10,7 @@ const SKTrimTitleTrailingSuffix = 'trimTitleTrailingSuffix';
 const SKJiraBacklogOpenDetailInNewWindow = 'jiraBacklogOpenDetailInNewWindow';
 const SKJiraBacklogHideCreateButton = 'jiraBacklogHideCreateButton';
 const SKJiraBacklogHideEstimateField = 'jiraBacklogHideEstimateField';
+const SKJiraBacklogHideEpicField = 'jiraBacklogHideEpicField';
 const SKJiraSpaceNavHiddenTabs = 'jiraSpaceNavHiddenTabs';
 const SKJiraTimelineOpenDetailInNewWindow = 'jiraTimelineOpenDetailInNewWindow';
 
@@ -22,6 +23,7 @@ interface Settings {
   jiraBacklogOpenDetailInNewWindow: boolean;
   jiraBacklogHideCreateButton: boolean;
   jiraBacklogHideEstimateField: boolean;
+  jiraBacklogHideEpicField: boolean;
   jiraSpaceNavHiddenTabs: string[];
   jiraTimelineOpenDetailInNewWindow: boolean;
 }
@@ -38,6 +40,7 @@ export default {
   SKJiraBacklogOpenDetailInNewWindow,
   SKJiraBacklogHideCreateButton,
   SKJiraBacklogHideEstimateField,
+  SKJiraBacklogHideEpicField,
   SKJiraSpaceNavHiddenTabs,
   SKJiraTimelineOpenDetailInNewWindow,
 
@@ -51,6 +54,7 @@ export default {
       [SKJiraBacklogOpenDetailInNewWindow]: false,
       [SKJiraBacklogHideCreateButton]: false,
       [SKJiraBacklogHideEstimateField]: false,
+      [SKJiraBacklogHideEpicField]: false,
       [SKJiraSpaceNavHiddenTabs]: [],
       [SKJiraTimelineOpenDetailInNewWindow]: false,
     };
@@ -108,6 +112,12 @@ export default {
     });
   },
 
+  async setJiraBacklogHideEpicField(value: boolean): Promise<void> {
+    await browser.storage.sync.set({
+      [SKJiraBacklogHideEpicField]: value,
+    });
+  },
+
   async setJiraSpaceNavHiddenTabs(value: string[]): Promise<void> {
     await browser.storage.sync.set({
       [SKJiraSpaceNavHiddenTabs]: value,
@@ -136,6 +146,7 @@ export default {
       jiraBacklogOpenDetailInNewWindow: all[SKJiraBacklogOpenDetailInNewWindow] as boolean,
       jiraBacklogHideCreateButton: all[SKJiraBacklogHideCreateButton] as boolean,
       jiraBacklogHideEstimateField: all[SKJiraBacklogHideEstimateField] as boolean,
+      jiraBacklogHideEpicField: all[SKJiraBacklogHideEpicField] as boolean,
       jiraSpaceNavHiddenTabs: all[SKJiraSpaceNavHiddenTabs] as string[],
       jiraTimelineOpenDetailInNewWindow: all[SKJiraTimelineOpenDetailInNewWindow] as boolean,
     };

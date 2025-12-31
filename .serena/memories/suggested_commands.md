@@ -10,7 +10,6 @@ npm install
 
 ### Build
 ```bash
-npm run build:ts          # TypeScriptをdist/へコンパイル
 npm run compile           # 全プラットフォーム向けにコンパイル
 npm run compile-chrome    # Chrome向けのみ
 npm run compile-firefox-mv2  # Firefox MV2向け

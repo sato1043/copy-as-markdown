@@ -17,6 +17,7 @@
 | Timeline Open in New Window | `jiraTimelineOpenDetailInNewWindow` | タイムラインの課題行クリックで新しいウィンドウを開く | 無効 |
 | Hide Create Button | `jiraBacklogHideCreateButton` | バックログのインライン「作成」ボタンを非表示 | 無効 |
 | Hide Estimate Field | `jiraBacklogHideEstimateField` | バックログのストーリーポイント（見積もり）フィールドを非表示 | 無効 |
+| Hide Epic Field | `jiraBacklogHideEpicField` | バックログのエピックフィールドを非表示 | 無効 |
 | Hidden Tabs | `jiraSpaceNavHiddenTabs` | スペースナビゲーションの指定タブを非表示 | 空配列（全表示） |
 
 ## 処理フロー
@@ -311,6 +312,7 @@ const SKJiraBacklogOpenDetailInNewWindow = 'jiraBacklogOpenDetailInNewWindow';
 const SKJiraTimelineOpenDetailInNewWindow = 'jiraTimelineOpenDetailInNewWindow';
 const SKJiraBacklogHideCreateButton = 'jiraBacklogHideCreateButton';
 const SKJiraBacklogHideEstimateField = 'jiraBacklogHideEstimateField';
+const SKJiraBacklogHideEpicField = 'jiraBacklogHideEpicField';
 const SKJiraSpaceNavHiddenTabs = 'jiraSpaceNavHiddenTabs';
 ```
 
@@ -324,6 +326,7 @@ const SKJiraSpaceNavHiddenTabs = 'jiraSpaceNavHiddenTabs';
 | Timeline Issue Behavior | `jiraTimelineOpenDetailInNewWindow` | タイムライン課題行クリックで新ウィンドウを開く |
 | Hide "Create" button | `jiraBacklogHideCreateButton` | インライン作成ボタンを非表示 |
 | Hide estimate field | `jiraBacklogHideEstimateField` | ストーリーポイント（見積もり）フィールドを非表示 |
+| Hide epic field | `jiraBacklogHideEpicField` | エピックフィールドを非表示 |
 | Space Navigation Hidden Tabs | `jiraSpaceNavHiddenTabs` | チェックしたタブを非表示（複数選択可） |
 
 **ナビゲーション**:
@@ -372,6 +375,20 @@ const ESTIMATE_FIELD_SELECTOR = '[data-testid="software-backlog.card-list.card.c
 ```
 
 Hide Create Button と同様のCSS注入方式で実装。
+
+### Hide Epic Field の実装詳細
+
+**対象セレクタ**:
+```typescript
+const EPIC_FIELD_ADD_BUTTON_SELECTOR = '[data-testid="issue-field-parent-switcher.ui.edit.suggested-parents-dropdown.add-parent-button"]';
+const EPIC_FIELD_TRIGGER_BUTTON_SELECTOR = '[data-testid="issue-field-parent-switcher.ui.edit.suggested-parents-dropdown.trigger-button"]';
+```
+
+ボタンから4階層上の親divを非表示にする（両方のボタンに対応）:
+```css
+div:has(> div > div > div > [data-testid="...add-parent-button"]) { display: none !important; }
+div:has(> div > div > div > [data-testid="...trigger-button"]) { display: none !important; }
+```
 
 ### Hidden Tabs の実装詳細
 

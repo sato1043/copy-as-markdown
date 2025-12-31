@@ -12,6 +12,8 @@ const CARD_SELECTOR = '[data-testid="software-backlog.card-list.card.card-conten
 const ISSUE_LINK_SELECTOR = '[data-testid="software-backlog.card-list.card.card-contents.screen-reader-key"]';
 const CREATE_BUTTON_SELECTOR = '[data-testid="software-backlog.card-list.inline-work-item-create.trigger-wrapper"]';
 const ESTIMATE_FIELD_SELECTOR = '[data-testid="software-backlog.card-list.card.card-contents.estimate-field-wrapper"]';
+const EPIC_FIELD_ADD_BUTTON_SELECTOR = '[data-testid="issue-field-parent-switcher.ui.edit.suggested-parents-dropdown.add-parent-button"]';
+const EPIC_FIELD_TRIGGER_BUTTON_SELECTOR = '[data-testid="issue-field-parent-switcher.ui.edit.suggested-parents-dropdown.trigger-button"]';
 
 // Timeline selectors
 const TIMELINE_ROW_SELECTOR = '[data-testid^="roadmap.timeline-table.components.list-item.container-"]';
@@ -22,6 +24,7 @@ const SETTING_KEY = 'jiraBacklogOpenDetailInNewWindow';
 const TIMELINE_SETTING_KEY = 'jiraTimelineOpenDetailInNewWindow';
 const HIDE_CREATE_SETTING_KEY = 'jiraBacklogHideCreateButton';
 const HIDE_ESTIMATE_SETTING_KEY = 'jiraBacklogHideEstimateField';
+const HIDE_EPIC_SETTING_KEY = 'jiraBacklogHideEpicField';
 const HIDDEN_TABS_SETTING_KEY = 'jiraSpaceNavHiddenTabs';
 
 // Fixed list of space navigation tabs (for reference)
@@ -73,6 +76,18 @@ async function isHideEstimateFieldEnabled(): Promise<boolean> {
     return result[HIDE_ESTIMATE_SETTING_KEY] as boolean;
   } catch (error) {
     console.error('[Copy as Markdown] Failed to read hide estimate field setting:', error);
+    return false;
+  }
+}
+
+async function isHideEpicFieldEnabled(): Promise<boolean> {
+  console.log('[Copy as Markdown] Checking if hide epic field is enabled...');
+  try {
+    const result = await browser.storage.sync.get({ [HIDE_EPIC_SETTING_KEY]: false });
+    console.log('[Copy as Markdown] Hide epic field setting value:', result[HIDE_EPIC_SETTING_KEY]);
+    return result[HIDE_EPIC_SETTING_KEY] as boolean;
+  } catch (error) {
+    console.error('[Copy as Markdown] Failed to read hide epic field setting:', error);
     return false;
   }
 }
@@ -130,6 +145,32 @@ function removeHideEstimateFieldStyle(): void {
   if (style) {
     style.remove();
     console.log('[Copy as Markdown] Hide estimate field style removed');
+  }
+}
+
+const HIDE_EPIC_FIELD_STYLE_ID = 'copy-as-markdown-hide-epic-field';
+
+function injectHideEpicFieldStyle(): void {
+  if (document.getElementById(HIDE_EPIC_FIELD_STYLE_ID)) {
+    return; // Already injected
+  }
+
+  const style = document.createElement('style');
+  style.id = HIDE_EPIC_FIELD_STYLE_ID;
+  // Hide the container div 4 levels up from the button (both add-parent-button and trigger-button)
+  style.textContent = `
+    div:has(> div > div > div > ${EPIC_FIELD_ADD_BUTTON_SELECTOR}) { display: none !important; }
+    div:has(> div > div > div > ${EPIC_FIELD_TRIGGER_BUTTON_SELECTOR}) { display: none !important; }
+  `;
+  document.head.appendChild(style);
+  console.log('[Copy as Markdown] Hide epic field style injected');
+}
+
+function removeHideEpicFieldStyle(): void {
+  const style = document.getElementById(HIDE_EPIC_FIELD_STYLE_ID);
+  if (style) {
+    style.remove();
+    console.log('[Copy as Markdown] Hide epic field style removed');
   }
 }
 
@@ -327,6 +368,14 @@ async function init(): Promise<void> {
     removeHideEstimateFieldStyle();
   }
 
+  // Handle hide epic field feature
+  const hideEpicFieldEnabled = await isHideEpicFieldEnabled();
+  if (hideEpicFieldEnabled) {
+    injectHideEpicFieldStyle();
+  } else {
+    removeHideEpicFieldStyle();
+  }
+
   // Handle hide space navigation tabs feature
   const hiddenTabs = await getHiddenTabs();
   injectHideTabsStyle(hiddenTabs);
@@ -355,6 +404,15 @@ browser.storage.sync.onChanged.addListener((changes) => {
       injectHideEstimateFieldStyle();
     } else {
       removeHideEstimateFieldStyle();
+    }
+  }
+
+  if (HIDE_EPIC_SETTING_KEY in changes) {
+    const newValue = changes[HIDE_EPIC_SETTING_KEY].newValue as boolean;
+    if (newValue) {
+      injectHideEpicFieldStyle();
+    } else {
+      removeHideEpicFieldStyle();
     }
   }
 
