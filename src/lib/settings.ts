@@ -7,6 +7,7 @@ const SKStyleOfUnorderedList = 'styleOfUnorderedList ';
 const SKStyleTabGroupIndentation = 'style.tabgroup.indentation ';
 const SKExtractBracketedPrefix = 'extractBracketedPrefix';
 const SKTrimTitleTrailingSuffix = 'trimTitleTrailingSuffix';
+const SKJiraBacklogOpenDetailInNewWindow = 'jiraBacklogOpenDetailInNewWindow';
 
 interface Settings {
   alwaysEscapeLinkBrackets: boolean;
@@ -14,6 +15,7 @@ interface Settings {
   styleOfTabGroupIndentation: TabGroupIndentationStyle;
   extractBracketedPrefix: boolean;
   trimTitleTrailingSuffix: boolean;
+  jiraBacklogOpenDetailInNewWindow: boolean;
 }
 
 /**
@@ -25,6 +27,7 @@ export default {
   SKStyleTabGroupIndentation,
   SKExtractBracketedPrefix,
   SKTrimTitleTrailingSuffix,
+  SKJiraBacklogOpenDetailInNewWindow,
 
   get defaultSettings(): Record<string, unknown> {
     return {
@@ -33,6 +36,7 @@ export default {
       [SKStyleTabGroupIndentation]: TabGroupIndentationStyle.Spaces,
       [SKExtractBracketedPrefix]: false,
       [SKTrimTitleTrailingSuffix]: false,
+      [SKJiraBacklogOpenDetailInNewWindow]: false,
     };
   },
 
@@ -70,6 +74,12 @@ export default {
     });
   },
 
+  async setJiraBacklogOpenDetailInNewWindow(value: boolean): Promise<void> {
+    await browser.storage.sync.set({
+      [SKJiraBacklogOpenDetailInNewWindow]: value,
+    });
+  },
+
   async reset(): Promise<void> {
     await browser.storage.sync.remove(this.keys);
   },
@@ -83,6 +93,7 @@ export default {
       styleOfTabGroupIndentation: all[SKStyleTabGroupIndentation] as TabGroupIndentationStyle,
       extractBracketedPrefix: all[SKExtractBracketedPrefix] as boolean,
       trimTitleTrailingSuffix: all[SKTrimTitleTrailingSuffix] as boolean,
+      jiraBacklogOpenDetailInNewWindow: all[SKJiraBacklogOpenDetailInNewWindow] as boolean,
     };
   },
 };

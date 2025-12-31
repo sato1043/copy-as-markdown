@@ -11,6 +11,9 @@
     "scripting",
     "storage"
   ],
+  "host_permissions": [
+    "*://*.atlassian.net/*"
+  ],
   "optional_permissions": [
     "tabGroups",
     "tabs"
@@ -123,6 +126,16 @@
       "matches": [
         "<all_urls>"
       ]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://*.atlassian.net/jira/*"],
+      "js": [
+        "dist/vendor/browser-polyfill.js",
+        "dist/content-scripts/jira-backlog.js"
+      ],
+      "run_at": "document_end"
     }
   ]
 }

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Copy as Markdown - Options</title>
+  <title>Copy as Markdown - JIRA Settings</title>
   <meta charset="utf-8" />
   <link rel="stylesheet" href="../vendor/bulma.css">
   <link rel="stylesheet" href="./style.css">
@@ -9,7 +9,7 @@
 <body>
 <div class="container section is-max-desktop">
   <h1 class="title">Copy as Markdown</h1>
-  <div id="flash-error" class="notification is-danger is-hidden">
+  <div id="flash-error" data-testid="flash-error" class="notification is-danger is-hidden">
     <p></p>
   </div>
   <div class="columns">
@@ -19,7 +19,7 @@
         <ul class="menu-list">
           <li><a href="options.html">Markdown Style</a></li>
           <li><a href="options-permissions.html">Permissions</a></li>
-          <li><a href="options-jira.html">JIRA</a></li>
+          <li><a class="is-active" href="options-jira.html">JIRA</a></li>
           <p class="menu-label">Formats</p>
           <li>
             <a href="multiple-links.html">Multiple Links</a>
@@ -32,7 +32,7 @@
             </ul>
           </li>
           <li>
-            <a class="is-active" href="single-link.html">Single Link</a>
+            <a href="single-link.html">Single Link</a>
             <ul class="menu-list" data-menu-custom-format-context="single-link">
               <li><a data-menu-custom-format-slot="1" href="custom-format.html?context=single-link&slot=1">Custom Format 1</a></li>
               <li><a data-menu-custom-format-slot="2" href="custom-format.html?context=single-link&slot=2">Custom Format 2</a></li>
@@ -51,55 +51,22 @@
     </div>
     <div class="column">
       <div class="box content">
-        <h2 class="title is-3">Format - Single Link</h2>
-        <form id='form-display-items' class="field">
-          <label class="label">Commands in Menus</label>
-          <p>Choose what items to show in popup menus and context menus.</p>  
+        <h2 class="title is-3">JIRA Settings</h2>
+        <form id="form-jira-backlog-open-detail-in-new-window" class="field">
+          <label class="label">Backlog Issue Behavior</label>
           <div class="control">
-            <label class="checkbox">
-              <input type="checkbox" name="builtin-single-link" data-built-in-style="singleLink" checked />
-              Built-in: Copy page or link as Markdown
-            </label>
-            <p class="help ml-5">Turns off the default page/link options</p>
+            <label class="checkbox"><input type="checkbox" name="jiraBacklogOpenDetailInNewWindow"/> Open issue detail in new window</label>
           </div>
-          <div class="control">
-            <label class="checkbox">
-              <input type="checkbox" name="custom-format-1" data-custom-format-slot="1" data-custom-format-context="single-link" />
-              <span data-custom-format-label>Copy as Custom Format 1</span>
-            </label>
-          </div>
-          <div class="control">
-            <label class="checkbox">
-              <input type="checkbox" name="custom-format-2" data-custom-format-slot="2" data-custom-format-context="single-link" />
-              <span data-custom-format-label>Copy as Custom Format 2</span>
-            </label>
-          </div>
-          <div class="control">
-            <label class="checkbox">
-              <input type="checkbox" name="custom-format-3" data-custom-format-slot="3" data-custom-format-context="single-link" />
-              <span data-custom-format-label>Copy as Custom Format 3</span>
-            </label>
-          </div>
-          <div class="control">
-            <label class="checkbox">
-              <input type="checkbox" name="custom-format-4" data-custom-format-slot="4" data-custom-format-context="single-link" />
-              <span data-custom-format-label>Copy as Custom Format 4</span>
-            </label>
-          </div>
-          <div class="control">
-            <label class="checkbox">
-              <input type="checkbox" name="custom-format-5" data-custom-format-slot="5" data-custom-format-context="single-link" />
-              <span data-custom-format-label>Copy as Custom Format 5</span>
-            </label>
-          </div>
+          <p class="help">
+            When enabled, clicking on an issue card in JIRA backlog will open the issue detail in a new window/tab
+            instead of the default panel view. This setting only affects pages on <code>*.atlassian.net/jira/*</code>.
+          </p>
         </form>
       </div>
     </div>
   </div>
+    <script src="../vendor/browser-polyfill.js"></script>
+    <script src="../ui/options-jira.js" type="module"></script>
 </div>
-<script src="../vendor/browser-polyfill.js"></script>
-<script src="../ui/built-in-style-options.js" type="module"></script>
-<script src="../ui/options-ui.js" type="module"></script>
-<script src="../ui/check-custom-formats.js" type="module"></script>
 </body>
 </html>

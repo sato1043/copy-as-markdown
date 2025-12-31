@@ -33,6 +33,8 @@ Copy as Markdown は、リンク、画像、選択範囲、タブを Markdown �
 | ドキュメント | 内容 |
 |-------------|------|
 | [`package-json-dependencies.md`](./docs/package-json-dependencies.md) | 依存パッケージの用途と使用箇所 |
+| [`context-menu-current-tab-handler.md`](./docs/context-menu-current-tab-handler.md) | Current Tab メニュー処理フロー |
+| [`jira-backlog-content-script.md`](./docs/jira-backlog-content-script.md) | JIRAバックログ コンテンツスクリプト |
 
 
 ## **重要**:AIエージェントは次の特性を持つ

@@ -9,7 +9,8 @@
     "contextMenus",
     "clipboardWrite",
     "scripting",
-    "storage"
+    "storage",
+    "*://*.atlassian.net/*"
   ],
   "optional_permissions": [
     "bookmarks",
@@ -117,6 +118,16 @@
   "web_accessible_resources": [
     "dist/vendor/turndown.mjs",
     "dist/vendor/turndown-plugin-gfm.mjs"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://*.atlassian.net/jira/*"],
+      "js": [
+        "dist/vendor/browser-polyfill.js",
+        "dist/content-scripts/jira-backlog.js"
+      ],
+      "run_at": "document_end"
+    }
   ],
   "browser_specific_settings": {
     "gecko": {

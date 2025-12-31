@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>JIRA Backlog Test Fixture</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 20px; }
+    .backlog-card {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin: 10px 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .backlog-card:hover { background: #f5f5f5; }
+    .issue-key { font-weight: bold; color: #0052cc; }
+  </style>
+</head>
+<body>
+  <h1>JIRA Backlog Test</h1>
+
+  <!-- Sprint container -->
+  <div data-testid="software-backlog.card-list">
+
+    <!-- Issue card 1 -->
+    <div data-testid="software-backlog.card-list.card" class="backlog-card">
+      <div data-testid="software-backlog.card-list.card.card-contents.accessible-card-key">
+        <a href="/browse/SCRUM-1"
+           data-testid="software-backlog.card-list.card.card-contents.screen-reader-key"
+           class="issue-key">SCRUM-1</a>
+      </div>
+      <div tabindex="0"
+           role="button"
+           aria-label="SCRUM-1 First issue title. Press Enter to load work item"
+           data-testid="software-backlog.card-list.card.card-contents.interaction-layer.accessible-card">
+        First issue title
+      </div>
+    </div>
+
+    <!-- Issue card 2 -->
+    <div data-testid="software-backlog.card-list.card" class="backlog-card">
+      <div data-testid="software-backlog.card-list.card.card-contents.accessible-card-key">
+        <a href="/browse/SCRUM-2"
+           data-testid="software-backlog.card-list.card.card-contents.screen-reader-key"
+           class="issue-key">SCRUM-2</a>
+      </div>
+      <div tabindex="0"
+           role="button"
+           aria-label="SCRUM-2 Second issue title. Press Enter to load work item"
+           data-testid="software-backlog.card-list.card.card-contents.interaction-layer.accessible-card">
+        Second issue title
+      </div>
+    </div>
+
+    <!-- Issue card 3 (without link, fallback to aria-label) -->
+    <div data-testid="software-backlog.card-list.card" class="backlog-card">
+      <div tabindex="0"
+           role="button"
+           aria-label="TEST-123 Third issue without explicit link"
+           data-testid="software-backlog.card-list.card.card-contents.interaction-layer.accessible-card">
+        Third issue (aria-label fallback)
+      </div>
+    </div>
+
+  </div>
+
+  <div id="click-log"></div>
+
+  <script>
+    // Log clicks for debugging
+    document.addEventListener('click', (e) => {
+      const log = document.getElementById('click-log');
+      const target = e.target;
+      log.innerHTML += `<p>Clicked: ${target.tagName} - ${target.getAttribute('data-testid') || 'no testid'}</p>`;
+    }, { capture: true });
+  </script>
+</body>
+</html>
