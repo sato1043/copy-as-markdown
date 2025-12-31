@@ -21,6 +21,21 @@
 <body>
   <h1>JIRA Backlog Test</h1>
 
+  <!-- Space Navigation -->
+  <nav aria-label="スペース ナビゲーション">
+    <ul>
+      <li><a href="/jira/software/projects/SCRUM/summary" data-testid="horizontal-nav-summary-tab">要約</a></li>
+      <li><a href="/jira/software/projects/SCRUM/boards/1/timeline" data-testid="horizontal-nav-timeline-tab">タイムライン</a></li>
+      <li><a href="/jira/software/projects/SCRUM/boards/1/backlog" data-testid="horizontal-nav-backlog-tab">バックログ</a></li>
+      <li><a href="/jira/software/projects/SCRUM/boards/1" data-testid="horizontal-nav-boards-tab">ボード</a></li>
+      <li><a href="/jira/software/projects/SCRUM/boards/1/calendar" data-testid="horizontal-nav-calendar-tab">カレンダー</a></li>
+      <li><a href="/jira/software/projects/SCRUM/list" data-testid="horizontal-nav-list-tab">リスト</a></li>
+      <li><a href="/jira/software/projects/SCRUM/form" data-testid="horizontal-nav-form-tab">フォーム</a></li>
+      <li><button data-testid="horizontal-nav-shortcuts-tab.dropdown-menu-trigger">ショートカット</button></li>
+      <li><button data-testid="navigation-kit-add-tab.ui.trigger" name="ナビゲーションに追加">+</button></li>
+    </ul>
+  </nav>
+
   <!-- Sprint container -->
   <div data-testid="software-backlog.card-list">
 
@@ -62,6 +77,11 @@
            data-testid="software-backlog.card-list.card.card-contents.interaction-layer.accessible-card">
         Third issue (aria-label fallback)
       </div>
+    </div>
+
+    <!-- Inline create button -->
+    <div data-testid="software-backlog.card-list.inline-work-item-create.trigger-wrapper">
+      <button>+ Create</button>
     </div>
 
   </div>

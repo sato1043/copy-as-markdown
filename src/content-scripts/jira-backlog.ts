@@ -12,6 +12,12 @@ const ISSUE_LINK_SELECTOR = '[data-testid="software-backlog.card-list.card.card-
 const CREATE_BUTTON_SELECTOR = '[data-testid="software-backlog.card-list.inline-work-item-create.trigger-wrapper"]';
 const SETTING_KEY = 'jiraBacklogOpenDetailInNewWindow';
 const HIDE_CREATE_SETTING_KEY = 'jiraBacklogHideCreateButton';
+const HIDDEN_TABS_SETTING_KEY = 'jiraSpaceNavHiddenTabs';
+
+// Fixed list of space navigation tabs (for reference)
+// Path values used in settings and CSS selectors:
+// summary, timeline, backlog, boards, calendar, list, form,
+// development, code, archived-work-items, pages, shortcuts, addtabs
 
 async function isOpenInNewWindowEnabled(): Promise<boolean> {
   console.log('[Copy as Markdown] Checking if open in new window is enabled...');
@@ -37,6 +43,18 @@ async function isHideCreateButtonEnabled(): Promise<boolean> {
   }
 }
 
+async function getHiddenTabs(): Promise<string[]> {
+  console.log('[Copy as Markdown] Getting hidden tabs...');
+  try {
+    const result = await browser.storage.sync.get({ [HIDDEN_TABS_SETTING_KEY]: [] });
+    console.log('[Copy as Markdown] Hidden tabs:', result[HIDDEN_TABS_SETTING_KEY]);
+    return result[HIDDEN_TABS_SETTING_KEY] as string[];
+  } catch (error) {
+    console.error('[Copy as Markdown] Failed to read hidden tabs setting:', error);
+    return [];
+  }
+}
+
 const HIDE_CREATE_BUTTON_STYLE_ID = 'copy-as-markdown-hide-create-button';
 
 function injectHideCreateButtonStyle(): void {
@@ -56,6 +74,48 @@ function removeHideCreateButtonStyle(): void {
   if (style) {
     style.remove();
     console.log('[Copy as Markdown] Hide create button style removed');
+  }
+}
+
+const HIDE_TABS_STYLE_ID = 'copy-as-markdown-hide-space-nav-tabs';
+
+function injectHideTabsStyle(hiddenTabs: string[]): void {
+  // Remove existing style first
+  removeHideTabsStyle();
+
+  if (hiddenTabs.length === 0) {
+    return;
+  }
+
+  const style = document.createElement('style');
+  style.id = HIDE_TABS_STYLE_ID;
+
+  // Generate CSS selectors for each hidden tab
+  const cssRules = hiddenTabs.map((tabPath) => {
+    // shortcuts and addtabs use button with data-testid instead of anchor with href
+    if (tabPath === 'shortcuts') {
+      return `nav[aria-label="スペース ナビゲーション"] li:has([data-testid="horizontal-nav-shortcuts-tab.dropdown-menu-trigger"]) { display: none !important; }`;
+    }
+    if (tabPath === 'addtabs') {
+      return `nav[aria-label="スペース ナビゲーション"] [data-testid="navigation-kit-add-tab.ui.trigger"] { display: none !important; }`;
+    }
+    // boards URL is /boards/N, but backlog/timeline/calendar are /boards/N/xxx, so exclude them
+    if (tabPath === 'boards') {
+      return `nav[aria-label="スペース ナビゲーション"] li:has(a[href*="/boards/"]):not(:has(a[href$="/backlog"])):not(:has(a[href$="/timeline"])):not(:has(a[href$="/calendar"])) { display: none !important; }`;
+    }
+    return `nav[aria-label="スペース ナビゲーション"] li:has(a[href$="/${tabPath}"]) { display: none !important; }`;
+  }).join('\n');
+
+  style.textContent = cssRules;
+  document.head.appendChild(style);
+  console.log('[Copy as Markdown] Hide tabs style injected for:', hiddenTabs);
+}
+
+function removeHideTabsStyle(): void {
+  const style = document.getElementById(HIDE_TABS_STYLE_ID);
+  if (style) {
+    style.remove();
+    console.log('[Copy as Markdown] Hide tabs style removed');
   }
 }
 
@@ -150,6 +210,10 @@ async function init(): Promise<void> {
   } else {
     removeHideCreateButtonStyle();
   }
+
+  // Handle hide space navigation tabs feature
+  const hiddenTabs = await getHiddenTabs();
+  injectHideTabsStyle(hiddenTabs);
 }
 
 // Listen for settings changes
@@ -167,6 +231,11 @@ browser.storage.sync.onChanged.addListener((changes) => {
     } else {
       removeHideCreateButtonStyle();
     }
+  }
+
+  if (HIDDEN_TABS_SETTING_KEY in changes) {
+    const newValue = changes[HIDDEN_TABS_SETTING_KEY].newValue as string[];
+    injectHideTabsStyle(newValue);
   }
 });
 

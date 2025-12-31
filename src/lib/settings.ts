@@ -9,6 +9,7 @@ const SKExtractBracketedPrefix = 'extractBracketedPrefix';
 const SKTrimTitleTrailingSuffix = 'trimTitleTrailingSuffix';
 const SKJiraBacklogOpenDetailInNewWindow = 'jiraBacklogOpenDetailInNewWindow';
 const SKJiraBacklogHideCreateButton = 'jiraBacklogHideCreateButton';
+const SKJiraSpaceNavHiddenTabs = 'jiraSpaceNavHiddenTabs';
 
 interface Settings {
   alwaysEscapeLinkBrackets: boolean;
@@ -18,6 +19,7 @@ interface Settings {
   trimTitleTrailingSuffix: boolean;
   jiraBacklogOpenDetailInNewWindow: boolean;
   jiraBacklogHideCreateButton: boolean;
+  jiraSpaceNavHiddenTabs: string[];
 }
 
 /**
@@ -31,6 +33,7 @@ export default {
   SKTrimTitleTrailingSuffix,
   SKJiraBacklogOpenDetailInNewWindow,
   SKJiraBacklogHideCreateButton,
+  SKJiraSpaceNavHiddenTabs,
 
   get defaultSettings(): Record<string, unknown> {
     return {
@@ -41,6 +44,7 @@ export default {
       [SKTrimTitleTrailingSuffix]: false,
       [SKJiraBacklogOpenDetailInNewWindow]: false,
       [SKJiraBacklogHideCreateButton]: false,
+      [SKJiraSpaceNavHiddenTabs]: [],
     };
   },
 
@@ -90,6 +94,12 @@ export default {
     });
   },
 
+  async setJiraSpaceNavHiddenTabs(value: string[]): Promise<void> {
+    await browser.storage.sync.set({
+      [SKJiraSpaceNavHiddenTabs]: value,
+    });
+  },
+
   async reset(): Promise<void> {
     await browser.storage.sync.remove(this.keys);
   },
@@ -105,6 +115,7 @@ export default {
       trimTitleTrailingSuffix: all[SKTrimTitleTrailingSuffix] as boolean,
       jiraBacklogOpenDetailInNewWindow: all[SKJiraBacklogOpenDetailInNewWindow] as boolean,
       jiraBacklogHideCreateButton: all[SKJiraBacklogHideCreateButton] as boolean,
+      jiraSpaceNavHiddenTabs: all[SKJiraSpaceNavHiddenTabs] as string[],
     };
   },
 };

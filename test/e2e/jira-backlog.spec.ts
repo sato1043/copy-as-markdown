@@ -11,6 +11,10 @@ import { expect, test } from './fixtures';
 const JIRA_BACKLOG_FIXTURE = 'http://localhost:5566/jira-backlog.html';
 const CARD_SELECTOR = '[data-testid="software-backlog.card-list.card.card-contents.interaction-layer.accessible-card"]';
 const SETTING_KEY = 'jiraBacklogOpenDetailInNewWindow';
+const HIDE_CREATE_SETTING_KEY = 'jiraBacklogHideCreateButton';
+const HIDDEN_TABS_SETTING_KEY = 'jiraSpaceNavHiddenTabs';
+const CREATE_BUTTON_SELECTOR = '[data-testid="software-backlog.card-list.inline-work-item-create.trigger-wrapper"]';
+const SPACE_NAV_SELECTOR = 'nav[aria-label="スペース ナビゲーション"]';
 
 test.describe('JIRA backlog content script', () => {
   test.beforeEach(async ({ page, serviceWorker }) => {
@@ -178,5 +182,164 @@ test.describe('JIRA backlog feature disabled', () => {
     }, SETTING_KEY);
 
     expect(isEnabled).toBe(false);
+  });
+});
+
+test.describe('JIRA backlog hide create button', () => {
+  test('hides create button when enabled', async ({ page, serviceWorker }) => {
+    // Enable hide create button
+    await serviceWorker.evaluate(async (key) => {
+      await chrome.storage.sync.set({ [key]: true });
+    }, HIDE_CREATE_SETTING_KEY);
+
+    await page.goto(JIRA_BACKLOG_FIXTURE);
+    await page.waitForLoadState('networkidle');
+
+    // Inject the CSS hiding logic
+    await page.evaluate((selector) => {
+      const style = document.createElement('style');
+      style.textContent = `${selector} { display: none !important; }`;
+      document.head.appendChild(style);
+    }, CREATE_BUTTON_SELECTOR);
+
+    // Verify create button is hidden
+    const createButton = page.locator(CREATE_BUTTON_SELECTOR);
+    await expect(createButton).toBeHidden();
+  });
+
+  test('shows create button when disabled', async ({ page, serviceWorker }) => {
+    // Disable hide create button
+    await serviceWorker.evaluate(async (key) => {
+      await chrome.storage.sync.set({ [key]: false });
+    }, HIDE_CREATE_SETTING_KEY);
+
+    await page.goto(JIRA_BACKLOG_FIXTURE);
+    await page.waitForLoadState('networkidle');
+
+    // Verify create button is visible
+    const createButton = page.locator(CREATE_BUTTON_SELECTOR);
+    await expect(createButton).toBeVisible();
+  });
+});
+
+test.describe('JIRA space navigation hidden tabs', () => {
+  test('hides tabs with href-based selector', async ({ page, serviceWorker }) => {
+    // Set hidden tabs
+    await serviceWorker.evaluate(async (key) => {
+      await chrome.storage.sync.set({ [key]: ['summary', 'list'] });
+    }, HIDDEN_TABS_SETTING_KEY);
+
+    await page.goto(JIRA_BACKLOG_FIXTURE);
+    await page.waitForLoadState('networkidle');
+
+    // Inject the CSS hiding logic
+    await page.evaluate((navSelector) => {
+      const style = document.createElement('style');
+      style.textContent = `
+        ${navSelector} li:has(a[href$="/summary"]) { display: none !important; }
+        ${navSelector} li:has(a[href$="/list"]) { display: none !important; }
+      `;
+      document.head.appendChild(style);
+    }, SPACE_NAV_SELECTOR);
+
+    // Verify summary and list tabs are hidden
+    const summaryTab = page.locator(`${SPACE_NAV_SELECTOR} li:has(a[href$="/summary"])`);
+    const listTab = page.locator(`${SPACE_NAV_SELECTOR} li:has(a[href$="/list"])`);
+    await expect(summaryTab).toBeHidden();
+    await expect(listTab).toBeHidden();
+
+    // Verify other tabs are still visible
+    const backlogTab = page.locator(`${SPACE_NAV_SELECTOR} li:has(a[href$="/backlog"])`);
+    await expect(backlogTab).toBeVisible();
+  });
+
+  test('hides shortcuts tab with data-testid selector', async ({ page, serviceWorker }) => {
+    // Set hidden tabs
+    await serviceWorker.evaluate(async (key) => {
+      await chrome.storage.sync.set({ [key]: ['shortcuts'] });
+    }, HIDDEN_TABS_SETTING_KEY);
+
+    await page.goto(JIRA_BACKLOG_FIXTURE);
+    await page.waitForLoadState('networkidle');
+
+    // Inject the CSS hiding logic for shortcuts
+    await page.evaluate((navSelector) => {
+      const style = document.createElement('style');
+      style.textContent = `${navSelector} li:has([data-testid="horizontal-nav-shortcuts-tab.dropdown-menu-trigger"]) { display: none !important; }`;
+      document.head.appendChild(style);
+    }, SPACE_NAV_SELECTOR);
+
+    // Verify shortcuts tab is hidden
+    const shortcutsTab = page.locator(`${SPACE_NAV_SELECTOR} li:has([data-testid="horizontal-nav-shortcuts-tab.dropdown-menu-trigger"])`);
+    await expect(shortcutsTab).toBeHidden();
+  });
+
+  test('hides addtabs button with data-testid selector', async ({ page, serviceWorker }) => {
+    // Set hidden tabs
+    await serviceWorker.evaluate(async (key) => {
+      await chrome.storage.sync.set({ [key]: ['addtabs'] });
+    }, HIDDEN_TABS_SETTING_KEY);
+
+    await page.goto(JIRA_BACKLOG_FIXTURE);
+    await page.waitForLoadState('networkidle');
+
+    // Inject the CSS hiding logic for addtabs
+    await page.evaluate((navSelector) => {
+      const style = document.createElement('style');
+      style.textContent = `${navSelector} [data-testid="navigation-kit-add-tab.ui.trigger"] { display: none !important; }`;
+      document.head.appendChild(style);
+    }, SPACE_NAV_SELECTOR);
+
+    // Verify addtabs button is hidden
+    const addtabsButton = page.locator(`${SPACE_NAV_SELECTOR} [data-testid="navigation-kit-add-tab.ui.trigger"]`);
+    await expect(addtabsButton).toBeHidden();
+  });
+
+  test('hides boards tab without hiding backlog/timeline/calendar', async ({ page, serviceWorker }) => {
+    // Set hidden tabs
+    await serviceWorker.evaluate(async (key) => {
+      await chrome.storage.sync.set({ [key]: ['boards'] });
+    }, HIDDEN_TABS_SETTING_KEY);
+
+    await page.goto(JIRA_BACKLOG_FIXTURE);
+    await page.waitForLoadState('networkidle');
+
+    // Inject the CSS hiding logic for boards (excluding backlog/timeline/calendar)
+    await page.evaluate((navSelector) => {
+      const style = document.createElement('style');
+      style.textContent = `${navSelector} li:has(a[href*="/boards/"]):not(:has(a[href$="/backlog"])):not(:has(a[href$="/timeline"])):not(:has(a[href$="/calendar"])) { display: none !important; }`;
+      document.head.appendChild(style);
+    }, SPACE_NAV_SELECTOR);
+
+    // Verify boards tab is hidden
+    const boardsTab = page.locator(`${SPACE_NAV_SELECTOR} li:has(a[href$="/boards/1"]):not(:has(a[href$="/backlog"]))`);
+    await expect(boardsTab).toBeHidden();
+
+    // Verify backlog, timeline, calendar tabs are still visible
+    const backlogTab = page.locator(`${SPACE_NAV_SELECTOR} li:has(a[href$="/backlog"])`);
+    const timelineTab = page.locator(`${SPACE_NAV_SELECTOR} li:has(a[href$="/timeline"])`);
+    const calendarTab = page.locator(`${SPACE_NAV_SELECTOR} li:has(a[href$="/calendar"])`);
+    await expect(backlogTab).toBeVisible();
+    await expect(timelineTab).toBeVisible();
+    await expect(calendarTab).toBeVisible();
+  });
+
+  test('shows all tabs when hiddenTabs is empty', async ({ page, serviceWorker }) => {
+    // Set empty hidden tabs
+    await serviceWorker.evaluate(async (key) => {
+      await chrome.storage.sync.set({ [key]: [] });
+    }, HIDDEN_TABS_SETTING_KEY);
+
+    await page.goto(JIRA_BACKLOG_FIXTURE);
+    await page.waitForLoadState('networkidle');
+
+    // Verify all tabs are visible
+    const allTabs = page.locator(`${SPACE_NAV_SELECTOR} li`);
+    const count = await allTabs.count();
+    expect(count).toBe(9); // 9 tabs in fixture
+
+    for (let i = 0; i < count; i++) {
+      await expect(allTabs.nth(i)).toBeVisible();
+    }
   });
 });

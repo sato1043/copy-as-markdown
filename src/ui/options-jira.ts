@@ -32,6 +32,14 @@ async function loadSettings(): Promise<void> {
       if (checkbox) checkbox.checked = settings.jiraBacklogHideCreateButton;
     }
 
+    const formHiddenTabs = document.forms.namedItem('form-jira-space-nav-hidden-tabs');
+    if (formHiddenTabs) {
+      const checkboxes = formHiddenTabs.querySelectorAll<HTMLInputElement>('input[name="hiddenTab"]');
+      checkboxes.forEach((checkbox) => {
+        checkbox.checked = settings.jiraSpaceNavHiddenTabs.includes(checkbox.value);
+      });
+    }
+
     hideFlash();
   } catch (error) {
     console.error('error getting settings', error);
@@ -63,6 +71,21 @@ if (formHideCreateButton) {
     try {
       const target = event.target as HTMLInputElement;
       await Settings.setJiraBacklogHideCreateButton(target.checked);
+      hideFlash();
+    } catch (error) {
+      console.error('failed to save settings:', error);
+      showFlash('Failed to save setting. Please try again.');
+    }
+  });
+}
+
+const formHiddenTabs = document.forms.namedItem('form-jira-space-nav-hidden-tabs');
+if (formHiddenTabs) {
+  formHiddenTabs.addEventListener('change', async () => {
+    try {
+      const checkboxes = formHiddenTabs.querySelectorAll<HTMLInputElement>('input[name="hiddenTab"]:checked');
+      const hiddenTabs = Array.from(checkboxes).map(cb => cb.value);
+      await Settings.setJiraSpaceNavHiddenTabs(hiddenTabs);
       hideFlash();
     } catch (error) {
       console.error('failed to save settings:', error);

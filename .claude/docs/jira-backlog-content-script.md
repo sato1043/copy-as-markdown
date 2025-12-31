@@ -15,6 +15,7 @@
 |--------|---------|------|-----------|
 | Open in New Window | `jiraBacklogOpenDetailInNewWindow` | バックログの課題カードクリックで新しいウィンドウを開く | 無効 |
 | Hide Create Button | `jiraBacklogHideCreateButton` | バックログのインライン「作成」ボタンを非表示 | 無効 |
+| Hidden Tabs | `jiraSpaceNavHiddenTabs` | スペースナビゲーションの指定タブを非表示 | 空配列（全表示） |
 
 ## 処理フロー
 
@@ -40,14 +41,22 @@
                 │       ├── false → スキップ
                 │       └── true  → attachClickListener() + observeDynamicContent()
                 │
-                └── [Hide Create Button 機能]
-                    isHideCreateButtonEnabled()
+                ├── [Hide Create Button 機能]
+                │   isHideCreateButtonEnabled()
+                │       │
+                │       ▼
+                │   browser.storage.sync.get()
+                │       │
+                │       ├── false → removeHideCreateButtonStyle()
+                │       └── true  → injectHideCreateButtonStyle()
+                │
+                └── [Hidden Tabs 機能]
+                    getHiddenTabs()
                         │
                         ▼
                     browser.storage.sync.get()
                         │
-                        ├── false → removeHideCreateButtonStyle()
-                        └── true  → injectHideCreateButtonStyle()
+                        └── injectHideTabsStyle(hiddenTabs)
 
     [Open in New Window] ユーザーがバックログ課題カードをクリック
         │
@@ -279,16 +288,18 @@ if (fs.existsSync(contentScriptsDir)) {
 ```typescript
 const SKJiraBacklogOpenDetailInNewWindow = 'jiraBacklogOpenDetailInNewWindow';
 const SKJiraBacklogHideCreateButton = 'jiraBacklogHideCreateButton';
+const SKJiraSpaceNavHiddenTabs = 'jiraSpaceNavHiddenTabs';
 ```
 
 ### オプションページ
 
 **ファイル**: `src/static/options-jira.html`
 
-| チェックボックス | 設定キー | 説明 |
-|-----------------|---------|------|
+| 設定項目 | 設定キー | 説明 |
+|---------|---------|------|
 | Open issue detail in new window | `jiraBacklogOpenDetailInNewWindow` | 課題カードクリックで新ウィンドウを開く |
 | Hide "Create" button | `jiraBacklogHideCreateButton` | インライン作成ボタンを非表示 |
+| Space Navigation Hidden Tabs | `jiraSpaceNavHiddenTabs` | チェックしたタブを非表示（複数選択可） |
 
 **ナビゲーション**:
 - 全オプションページのメニューに「JIRA」リンクを追加
@@ -327,11 +338,61 @@ function removeHideCreateButtonStyle(): void {
 - `jiraBacklogHideCreateButton`: 即座にスタイルを注入/削除（リロード不要）
 - `jiraBacklogOpenDetailInNewWindow`: ページをリロード（リスナー管理の簡略化のため）
 
+### Hidden Tabs の実装詳細
+
+**対象タブ一覧**:
+
+| パス | 日本語名 | セレクタ方式 |
+|-----|---------|-------------|
+| summary | 要約 | href |
+| timeline | タイムライン | href |
+| backlog | バックログ | href |
+| boards | ボード | href（特殊処理） |
+| calendar | カレンダー | href |
+| list | リスト | href |
+| form | フォーム | href |
+| development | 開発 | href |
+| code | コード | href |
+| archived-work-items | アーカイブ済みの作業項目 | href |
+| pages | ページ | href |
+| shortcuts | ショートカット | data-testid |
+| addtabs | タブを追加 | data-testid |
+
+**CSS生成ロジック**:
+
+```typescript
+const cssRules = hiddenTabs.map((tabPath) => {
+  // shortcuts と addtabs は button 要素のため data-testid で判定
+  if (tabPath === 'shortcuts') {
+    return `nav[aria-label="スペース ナビゲーション"] li:has([data-testid="horizontal-nav-shortcuts-tab.dropdown-menu-trigger"]) { display: none !important; }`;
+  }
+  if (tabPath === 'addtabs') {
+    return `nav[aria-label="スペース ナビゲーション"] [data-testid="navigation-kit-add-tab.ui.trigger"] { display: none !important; }`;
+  }
+  // boards は /boards/N 形式だが、backlog/timeline/calendar は /boards/N/xxx のため除外
+  if (tabPath === 'boards') {
+    return `nav[aria-label="スペース ナビゲーション"] li:has(a[href*="/boards/"]):not(:has(a[href$="/backlog"])):not(:has(a[href$="/timeline"])):not(:has(a[href$="/calendar"])) { display: none !important; }`;
+  }
+  // その他は href 末尾一致で判定
+  return `nav[aria-label="スペース ナビゲーション"] li:has(a[href$="/${tabPath}"]) { display: none !important; }`;
+}).join('\n');
+```
+
+**特殊ケース**:
+- `shortcuts`: `<button>` 要素のため `data-testid` で判定
+- `addtabs`: `<button>` 要素のため `data-testid` で判定
+- `boards`: URL が `/boards/N` だが、`backlog`/`timeline`/`calendar` は `/boards/N/xxx` のため除外処理が必要
+
+**設定変更時の動作**:
+- `jiraSpaceNavHiddenTabs`: 即座にスタイルを再注入（リロード不要）
+
 ## テスト
 
 ### E2Eテスト
 
 **ファイル**: `test/e2e/jira-backlog.spec.ts`
+
+**Open in New Window テスト**:
 
 | テストケース | 検証内容 |
 |-------------|---------|
@@ -340,6 +401,23 @@ function removeHideCreateButtonStyle(): void {
 | `content script opens new window on card click` | カードクリックで新ウィンドウが開く |
 | `aria-label fallback extracts issue key` | aria-labelからの課題キー抽出 |
 | `content script does not activate when disabled` | 無効時は動作しない |
+
+**Hide Create Button テスト**:
+
+| テストケース | 検証内容 |
+|-------------|---------|
+| `hides create button when enabled` | 有効時にCreateボタンが非表示 |
+| `shows create button when disabled` | 無効時にCreateボタンが表示 |
+
+**Hidden Tabs テスト**:
+
+| テストケース | 検証内容 |
+|-------------|---------|
+| `hides tabs with href-based selector` | href ベースのタブが非表示 |
+| `hides shortcuts tab with data-testid selector` | shortcuts タブが非表示 |
+| `hides addtabs button with data-testid selector` | addtabs ボタンが非表示 |
+| `hides boards tab without hiding backlog/timeline/calendar` | boards のみ非表示（他は表示） |
+| `shows all tabs when hiddenTabs is empty` | 空配列時は全タブ表示 |
 
 ### フィクスチャ
 
