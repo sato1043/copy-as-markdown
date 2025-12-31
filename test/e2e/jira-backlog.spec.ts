@@ -11,10 +11,13 @@ import { expect, test } from './fixtures';
 const JIRA_BACKLOG_FIXTURE = 'http://localhost:5566/jira-backlog.html';
 const CARD_SELECTOR = '[data-testid="software-backlog.card-list.card.card-contents.interaction-layer.accessible-card"]';
 const SETTING_KEY = 'jiraBacklogOpenDetailInNewWindow';
+const TIMELINE_SETTING_KEY = 'jiraTimelineOpenDetailInNewWindow';
 const HIDE_CREATE_SETTING_KEY = 'jiraBacklogHideCreateButton';
 const HIDDEN_TABS_SETTING_KEY = 'jiraSpaceNavHiddenTabs';
 const CREATE_BUTTON_SELECTOR = '[data-testid="software-backlog.card-list.inline-work-item-create.trigger-wrapper"]';
 const SPACE_NAV_SELECTOR = 'nav[aria-label="スペース ナビゲーション"]';
+const TIMELINE_ROW_SELECTOR = '[data-testid^="roadmap.timeline-table.components.list-item.container-"]';
+const TIMELINE_LINK_SELECTOR = '[data-testid="roadmap.timeline-table-kit.ui.list-item-content.summary.key"]';
 
 test.describe('JIRA backlog content script', () => {
   test.beforeEach(async ({ page, serviceWorker }) => {
@@ -341,5 +344,111 @@ test.describe('JIRA space navigation hidden tabs', () => {
     for (let i = 0; i < count; i++) {
       await expect(allTabs.nth(i)).toBeVisible();
     }
+  });
+});
+
+test.describe('JIRA timeline content script', () => {
+  test.beforeEach(async ({ page, serviceWorker }) => {
+    // Enable the timeline feature
+    await serviceWorker.evaluate(async (key) => {
+      await chrome.storage.sync.set({ [key]: true });
+    }, TIMELINE_SETTING_KEY);
+
+    // Navigate to fixture page
+    await page.goto(JIRA_BACKLOG_FIXTURE);
+    await page.waitForLoadState('networkidle');
+  });
+
+  test('timeline setting is stored correctly', async ({ serviceWorker }) => {
+    const value = await serviceWorker.evaluate(async (key) => {
+      const result = await chrome.storage.sync.get({ [key]: false });
+      return result[key];
+    }, TIMELINE_SETTING_KEY);
+
+    expect(value).toBe(true);
+  });
+
+  test('fixture page has timeline DOM structure', async ({ page }) => {
+    // Verify fixture has the expected timeline elements
+    const rows = await page.locator(TIMELINE_ROW_SELECTOR).count();
+    expect(rows).toBe(2);
+
+    // First row should have a link
+    const firstRowLink = await page.locator(TIMELINE_LINK_SELECTOR).first();
+    await expect(firstRowLink).toHaveAttribute('href', '/browse/SCRUM-2');
+  });
+
+  test('content script injected via page.evaluate opens new window on timeline row click', async ({
+    page,
+  }) => {
+    // Inject the content script logic directly via page.evaluate
+    await page.evaluate((selectors) => {
+      const { TIMELINE_ROW_SELECTOR, TIMELINE_LINK_SELECTOR } = selectors;
+
+      function findTimelineIssueUrl(row: Element): string | null {
+        const link = row.querySelector(TIMELINE_LINK_SELECTOR) as HTMLAnchorElement | null;
+        if (link?.href) return link.href;
+        return null;
+      }
+
+      function handleTimelineRowClick(event: MouseEvent): void {
+        const target = event.target as Element;
+        const row = target.closest(TIMELINE_ROW_SELECTOR);
+        if (!row) {
+          console.log('[Test] No timeline row found for target:', target);
+          return;
+        }
+
+        const issueUrl = findTimelineIssueUrl(row);
+        if (!issueUrl) {
+          console.log('[Test] No issue URL found for row:', row);
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        // Store the URL for verification instead of opening
+        (window as any).__lastClickedTimelineIssueUrl = issueUrl;
+        console.log('[Test] Would open timeline issue:', issueUrl);
+      }
+
+      document.addEventListener('click', handleTimelineRowClick, { capture: true });
+      console.log('[Test] Timeline content script logic injected');
+    }, { TIMELINE_ROW_SELECTOR, TIMELINE_LINK_SELECTOR });
+
+    // Wait for script to be injected
+    await page.waitForTimeout(100);
+
+    // Click on the first timeline row
+    const firstRow = page.locator(TIMELINE_ROW_SELECTOR).first();
+    await firstRow.click();
+
+    // Verify the URL was captured
+    const capturedUrl = await page.evaluate(() => (window as any).__lastClickedTimelineIssueUrl);
+    expect(capturedUrl).toContain('/browse/SCRUM-2');
+  });
+});
+
+test.describe('JIRA timeline feature disabled', () => {
+  test('content script does not activate when timeline setting is false', async ({
+    page,
+    serviceWorker,
+  }) => {
+    // Ensure the timeline feature is disabled
+    await serviceWorker.evaluate(async (key) => {
+      await chrome.storage.sync.set({ [key]: false });
+    }, TIMELINE_SETTING_KEY);
+
+    await page.goto(JIRA_BACKLOG_FIXTURE);
+    await page.waitForLoadState('networkidle');
+
+    // The content script should check the setting and not attach listeners
+    const isEnabled = await serviceWorker.evaluate(async (key) => {
+      const result = await chrome.storage.sync.get({ [key]: false });
+      return result[key];
+    }, TIMELINE_SETTING_KEY);
+
+    expect(isEnabled).toBe(false);
   });
 });

@@ -10,6 +10,7 @@ const SKTrimTitleTrailingSuffix = 'trimTitleTrailingSuffix';
 const SKJiraBacklogOpenDetailInNewWindow = 'jiraBacklogOpenDetailInNewWindow';
 const SKJiraBacklogHideCreateButton = 'jiraBacklogHideCreateButton';
 const SKJiraSpaceNavHiddenTabs = 'jiraSpaceNavHiddenTabs';
+const SKJiraTimelineOpenDetailInNewWindow = 'jiraTimelineOpenDetailInNewWindow';
 
 interface Settings {
   alwaysEscapeLinkBrackets: boolean;
@@ -20,6 +21,7 @@ interface Settings {
   jiraBacklogOpenDetailInNewWindow: boolean;
   jiraBacklogHideCreateButton: boolean;
   jiraSpaceNavHiddenTabs: string[];
+  jiraTimelineOpenDetailInNewWindow: boolean;
 }
 
 /**
@@ -34,6 +36,7 @@ export default {
   SKJiraBacklogOpenDetailInNewWindow,
   SKJiraBacklogHideCreateButton,
   SKJiraSpaceNavHiddenTabs,
+  SKJiraTimelineOpenDetailInNewWindow,
 
   get defaultSettings(): Record<string, unknown> {
     return {
@@ -45,6 +48,7 @@ export default {
       [SKJiraBacklogOpenDetailInNewWindow]: false,
       [SKJiraBacklogHideCreateButton]: false,
       [SKJiraSpaceNavHiddenTabs]: [],
+      [SKJiraTimelineOpenDetailInNewWindow]: false,
     };
   },
 
@@ -100,6 +104,12 @@ export default {
     });
   },
 
+  async setJiraTimelineOpenDetailInNewWindow(value: boolean): Promise<void> {
+    await browser.storage.sync.set({
+      [SKJiraTimelineOpenDetailInNewWindow]: value,
+    });
+  },
+
   async reset(): Promise<void> {
     await browser.storage.sync.remove(this.keys);
   },
@@ -116,6 +126,7 @@ export default {
       jiraBacklogOpenDetailInNewWindow: all[SKJiraBacklogOpenDetailInNewWindow] as boolean,
       jiraBacklogHideCreateButton: all[SKJiraBacklogHideCreateButton] as boolean,
       jiraSpaceNavHiddenTabs: all[SKJiraSpaceNavHiddenTabs] as string[],
+      jiraTimelineOpenDetailInNewWindow: all[SKJiraTimelineOpenDetailInNewWindow] as boolean,
     };
   },
 };

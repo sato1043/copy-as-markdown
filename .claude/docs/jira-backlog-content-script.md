@@ -13,7 +13,8 @@
 
 | 機能名 | 設定キー | 動作 | デフォルト |
 |--------|---------|------|-----------|
-| Open in New Window | `jiraBacklogOpenDetailInNewWindow` | バックログの課題カードクリックで新しいウィンドウを開く | 無効 |
+| Backlog Open in New Window | `jiraBacklogOpenDetailInNewWindow` | バックログの課題カードクリックで新しいウィンドウを開く | 無効 |
+| Timeline Open in New Window | `jiraTimelineOpenDetailInNewWindow` | タイムラインの課題行クリックで新しいウィンドウを開く | 無効 |
 | Hide Create Button | `jiraBacklogHideCreateButton` | バックログのインライン「作成」ボタンを非表示 | 無効 |
 | Hidden Tabs | `jiraSpaceNavHiddenTabs` | スペースナビゲーションの指定タブを非表示 | 空配列（全表示） |
 
@@ -32,7 +33,7 @@
                 ▼
             init()
                 │
-                ├── [Open in New Window 機能]
+                ├── [Backlog Open in New Window 機能]
                 │   isOpenInNewWindowEnabled()
                 │       │
                 │       ▼
@@ -40,6 +41,15 @@
                 │       │
                 │       ├── false → スキップ
                 │       └── true  → attachClickListener() + observeDynamicContent()
+                │
+                ├── [Timeline Open in New Window 機能]
+                │   isTimelineOpenInNewWindowEnabled()
+                │       │
+                │       ▼
+                │   browser.storage.sync.get()
+                │       │
+                │       ├── false → スキップ
+                │       └── true  → attachTimelineClickListener() + observeDynamicContent()
                 │
                 ├── [Hide Create Button 機能]
                 │   isHideCreateButtonEnabled()
@@ -139,21 +149,31 @@
 
 ### 1. セレクタ定義
 
-**ファイル**: `src/content-scripts/jira-backlog.ts:10-14`
+**ファイル**: `src/content-scripts/jira-backlog.ts:10-23`
 
 ```typescript
+// Backlog selectors
 const CARD_SELECTOR = '[data-testid="software-backlog.card-list.card.card-contents.interaction-layer.accessible-card"]';
 const ISSUE_LINK_SELECTOR = '[data-testid="software-backlog.card-list.card.card-contents.screen-reader-key"]';
 const CREATE_BUTTON_SELECTOR = '[data-testid="software-backlog.card-list.inline-work-item-create.trigger-wrapper"]';
+
+// Timeline selectors
+const TIMELINE_ROW_SELECTOR = '[data-testid^="roadmap.timeline-table.components.list-item.container-"]';
+const TIMELINE_LINK_SELECTOR = '[data-testid="roadmap.timeline-table-kit.ui.list-item-content.summary.key"]';
+
+// Setting keys
 const SETTING_KEY = 'jiraBacklogOpenDetailInNewWindow';
+const TIMELINE_SETTING_KEY = 'jiraTimelineOpenDetailInNewWindow';
 const HIDE_CREATE_SETTING_KEY = 'jiraBacklogHideCreateButton';
 ```
 
 | セレクタ/キー | 対象 |
 |--------------|------|
-| `CARD_SELECTOR` | クリック可能な課題カード（アクセシビリティ用） |
-| `ISSUE_LINK_SELECTOR` | スクリーンリーダー用の課題リンク要素 |
+| `CARD_SELECTOR` | バックログのクリック可能な課題カード |
+| `ISSUE_LINK_SELECTOR` | バックログのスクリーンリーダー用リンク要素 |
 | `CREATE_BUTTON_SELECTOR` | インライン「作成」ボタンのラッパー要素 |
+| `TIMELINE_ROW_SELECTOR` | タイムラインの課題行（data-testid前方一致） |
+| `TIMELINE_LINK_SELECTOR` | タイムラインの課題リンク要素 |
 
 ### 2. 設定読み込み
 
@@ -287,6 +307,7 @@ if (fs.existsSync(contentScriptsDir)) {
 
 ```typescript
 const SKJiraBacklogOpenDetailInNewWindow = 'jiraBacklogOpenDetailInNewWindow';
+const SKJiraTimelineOpenDetailInNewWindow = 'jiraTimelineOpenDetailInNewWindow';
 const SKJiraBacklogHideCreateButton = 'jiraBacklogHideCreateButton';
 const SKJiraSpaceNavHiddenTabs = 'jiraSpaceNavHiddenTabs';
 ```
@@ -297,7 +318,8 @@ const SKJiraSpaceNavHiddenTabs = 'jiraSpaceNavHiddenTabs';
 
 | 設定項目 | 設定キー | 説明 |
 |---------|---------|------|
-| Open issue detail in new window | `jiraBacklogOpenDetailInNewWindow` | 課題カードクリックで新ウィンドウを開く |
+| Backlog Issue Behavior | `jiraBacklogOpenDetailInNewWindow` | バックログ課題カードクリックで新ウィンドウを開く |
+| Timeline Issue Behavior | `jiraTimelineOpenDetailInNewWindow` | タイムライン課題行クリックで新ウィンドウを開く |
 | Hide "Create" button | `jiraBacklogHideCreateButton` | インライン作成ボタンを非表示 |
 | Space Navigation Hidden Tabs | `jiraSpaceNavHiddenTabs` | チェックしたタブを非表示（複数選択可） |
 
@@ -392,7 +414,7 @@ const cssRules = hiddenTabs.map((tabPath) => {
 
 **ファイル**: `test/e2e/jira-backlog.spec.ts`
 
-**Open in New Window テスト**:
+**Backlog Open in New Window テスト**:
 
 | テストケース | 検証内容 |
 |-------------|---------|
@@ -401,6 +423,15 @@ const cssRules = hiddenTabs.map((tabPath) => {
 | `content script opens new window on card click` | カードクリックで新ウィンドウが開く |
 | `aria-label fallback extracts issue key` | aria-labelからの課題キー抽出 |
 | `content script does not activate when disabled` | 無効時は動作しない |
+
+**Timeline Open in New Window テスト**:
+
+| テストケース | 検証内容 |
+|-------------|---------|
+| `timeline setting is stored correctly` | タイムライン設定値が正しく保存される |
+| `fixture page has timeline DOM structure` | タイムラインフィクスチャDOMが期待通り |
+| `content script opens new window on timeline row click` | タイムライン行クリックで新ウィンドウが開く |
+| `content script does not activate when timeline setting is false` | 無効時は動作しない |
 
 **Hide Create Button テスト**:
 

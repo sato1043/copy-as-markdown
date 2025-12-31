@@ -7,10 +7,18 @@
 
 console.log('[Copy as Markdown] JIRA backlog content script loaded');
 
+// Backlog selectors
 const CARD_SELECTOR = '[data-testid="software-backlog.card-list.card.card-contents.interaction-layer.accessible-card"]';
 const ISSUE_LINK_SELECTOR = '[data-testid="software-backlog.card-list.card.card-contents.screen-reader-key"]';
 const CREATE_BUTTON_SELECTOR = '[data-testid="software-backlog.card-list.inline-work-item-create.trigger-wrapper"]';
+
+// Timeline selectors
+const TIMELINE_ROW_SELECTOR = '[data-testid^="roadmap.timeline-table.components.list-item.container-"]';
+const TIMELINE_LINK_SELECTOR = '[data-testid="roadmap.timeline-table-kit.ui.list-item-content.summary.key"]';
+
+// Setting keys
 const SETTING_KEY = 'jiraBacklogOpenDetailInNewWindow';
+const TIMELINE_SETTING_KEY = 'jiraTimelineOpenDetailInNewWindow';
 const HIDE_CREATE_SETTING_KEY = 'jiraBacklogHideCreateButton';
 const HIDDEN_TABS_SETTING_KEY = 'jiraSpaceNavHiddenTabs';
 
@@ -20,13 +28,25 @@ const HIDDEN_TABS_SETTING_KEY = 'jiraSpaceNavHiddenTabs';
 // development, code, archived-work-items, pages, shortcuts, addtabs
 
 async function isOpenInNewWindowEnabled(): Promise<boolean> {
-  console.log('[Copy as Markdown] Checking if open in new window is enabled...');
+  console.log('[Copy as Markdown] Checking if backlog open in new window is enabled...');
   try {
     const result = await browser.storage.sync.get({ [SETTING_KEY]: false });
-    console.log('[Copy as Markdown] Open in new window setting value:', result[SETTING_KEY]);
+    console.log('[Copy as Markdown] Backlog open in new window setting value:', result[SETTING_KEY]);
     return result[SETTING_KEY] as boolean;
   } catch (error) {
-    console.error('[Copy as Markdown] Failed to read open in new window setting:', error);
+    console.error('[Copy as Markdown] Failed to read backlog open in new window setting:', error);
+    return false;
+  }
+}
+
+async function isTimelineOpenInNewWindowEnabled(): Promise<boolean> {
+  console.log('[Copy as Markdown] Checking if timeline open in new window is enabled...');
+  try {
+    const result = await browser.storage.sync.get({ [TIMELINE_SETTING_KEY]: false });
+    console.log('[Copy as Markdown] Timeline open in new window setting value:', result[TIMELINE_SETTING_KEY]);
+    return result[TIMELINE_SETTING_KEY] as boolean;
+  } catch (error) {
+    console.error('[Copy as Markdown] Failed to read timeline open in new window setting:', error);
     return false;
   }
 }
@@ -144,6 +164,15 @@ function findIssueUrl(card: Element): string | null {
   return null;
 }
 
+function findTimelineIssueUrl(row: Element): string | null {
+  // Find the issue link within the timeline row
+  const link = row.querySelector(TIMELINE_LINK_SELECTOR) as HTMLAnchorElement | null;
+  if (link?.href) {
+    return link.href;
+  }
+  return null;
+}
+
 function handleCardClick(event: MouseEvent): void {
   console.log('[Copy as Markdown] Click event captured');
   const target = event.target as Element;
@@ -171,10 +200,43 @@ function handleCardClick(event: MouseEvent): void {
   window.open(issueUrl, '_blank');
 }
 
+function handleTimelineRowClick(event: MouseEvent): void {
+  console.log('[Copy as Markdown] Timeline click event captured');
+  const target = event.target as Element;
+  const row = target.closest(TIMELINE_ROW_SELECTOR);
+
+  if (!row) {
+    console.log('[Copy as Markdown] No timeline row found for target:', target.tagName, target.className);
+    return;
+  }
+
+  console.log('[Copy as Markdown] Timeline row found:', row.getAttribute('data-testid'));
+  const issueUrl = findTimelineIssueUrl(row);
+  if (!issueUrl) {
+    console.log('[Copy as Markdown] No issue URL found in timeline row');
+    return;
+  }
+
+  console.log('[Copy as Markdown] Opening issue from timeline:', issueUrl);
+
+  // Prevent default click behavior
+  event.preventDefault();
+  event.stopPropagation();
+
+  // Open in new window/tab
+  window.open(issueUrl, '_blank');
+}
+
 function attachClickListener(): void {
   // Use capture phase to intercept before JIRA's handlers
   document.addEventListener('click', handleCardClick, { capture: true });
-  console.log('[Copy as Markdown] Click listener attached');
+  console.log('[Copy as Markdown] Backlog click listener attached');
+}
+
+function attachTimelineClickListener(): void {
+  // Use capture phase to intercept before JIRA's handlers
+  document.addEventListener('click', handleTimelineRowClick, { capture: true });
+  console.log('[Copy as Markdown] Timeline click listener attached');
 }
 
 function observeDynamicContent(): void {
@@ -193,14 +255,24 @@ function observeDynamicContent(): void {
 async function init(): Promise<void> {
   console.log('[Copy as Markdown] init() called');
 
-  // Handle open in new window feature
+  // Handle backlog open in new window feature
   const openInNewWindowEnabled = await isOpenInNewWindowEnabled();
   if (openInNewWindowEnabled) {
     attachClickListener();
     observeDynamicContent();
     console.log('[Copy as Markdown] JIRA backlog open in new window enabled');
   } else {
-    console.log('[Copy as Markdown] Open in new window feature is disabled');
+    console.log('[Copy as Markdown] Backlog open in new window feature is disabled');
+  }
+
+  // Handle timeline open in new window feature
+  const timelineOpenInNewWindowEnabled = await isTimelineOpenInNewWindowEnabled();
+  if (timelineOpenInNewWindowEnabled) {
+    attachTimelineClickListener();
+    observeDynamicContent();
+    console.log('[Copy as Markdown] JIRA timeline open in new window enabled');
+  } else {
+    console.log('[Copy as Markdown] Timeline open in new window feature is disabled');
   }
 
   // Handle hide create button feature
@@ -218,7 +290,7 @@ async function init(): Promise<void> {
 
 // Listen for settings changes
 browser.storage.sync.onChanged.addListener((changes) => {
-  if (SETTING_KEY in changes) {
+  if (SETTING_KEY in changes || TIMELINE_SETTING_KEY in changes) {
     // Reload page to apply new setting
     // (simpler than managing listener state)
     window.location.reload();

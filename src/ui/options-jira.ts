@@ -26,6 +26,12 @@ async function loadSettings(): Promise<void> {
       if (checkbox) checkbox.checked = settings.jiraBacklogOpenDetailInNewWindow;
     }
 
+    const formTimelineOpenInNewWindow = document.forms.namedItem('form-jira-timeline-open-detail-in-new-window');
+    if (formTimelineOpenInNewWindow) {
+      const checkbox = formTimelineOpenInNewWindow.elements.namedItem('jiraTimelineOpenDetailInNewWindow') as HTMLInputElement | null;
+      if (checkbox) checkbox.checked = settings.jiraTimelineOpenDetailInNewWindow;
+    }
+
     const formHideCreateButton = document.forms.namedItem('form-jira-backlog-hide-create-button');
     if (formHideCreateButton) {
       const checkbox = formHideCreateButton.elements.namedItem('jiraBacklogHideCreateButton') as HTMLInputElement | null;
@@ -57,6 +63,20 @@ if (formOpenInNewWindow) {
     try {
       const target = event.target as HTMLInputElement;
       await Settings.setJiraBacklogOpenDetailInNewWindow(target.checked);
+      hideFlash();
+    } catch (error) {
+      console.error('failed to save settings:', error);
+      showFlash('Failed to save setting. Please try again.');
+    }
+  });
+}
+
+const formTimelineOpenInNewWindow = document.forms.namedItem('form-jira-timeline-open-detail-in-new-window');
+if (formTimelineOpenInNewWindow) {
+  formTimelineOpenInNewWindow.addEventListener('change', async (event) => {
+    try {
+      const target = event.target as HTMLInputElement;
+      await Settings.setJiraTimelineOpenDetailInNewWindow(target.checked);
       hideFlash();
     } catch (error) {
       console.error('failed to save settings:', error);
