@@ -19,12 +19,19 @@ function hideFlash(): void {
 async function loadSettings(): Promise<void> {
   try {
     const settings = await Settings.getAll();
-    const form = document.forms.namedItem('form-jira-backlog-open-detail-in-new-window');
 
-    if (form) {
-      const checkbox = form.elements.namedItem('jiraBacklogOpenDetailInNewWindow') as HTMLInputElement | null;
+    const formOpenInNewWindow = document.forms.namedItem('form-jira-backlog-open-detail-in-new-window');
+    if (formOpenInNewWindow) {
+      const checkbox = formOpenInNewWindow.elements.namedItem('jiraBacklogOpenDetailInNewWindow') as HTMLInputElement | null;
       if (checkbox) checkbox.checked = settings.jiraBacklogOpenDetailInNewWindow;
     }
+
+    const formHideCreateButton = document.forms.namedItem('form-jira-backlog-hide-create-button');
+    if (formHideCreateButton) {
+      const checkbox = formHideCreateButton.elements.namedItem('jiraBacklogHideCreateButton') as HTMLInputElement | null;
+      if (checkbox) checkbox.checked = settings.jiraBacklogHideCreateButton;
+    }
+
     hideFlash();
   } catch (error) {
     console.error('error getting settings', error);
@@ -36,12 +43,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadSettings();
 });
 
-const form = document.forms.namedItem('form-jira-backlog-open-detail-in-new-window');
-if (form) {
-  form.addEventListener('change', async (event) => {
+const formOpenInNewWindow = document.forms.namedItem('form-jira-backlog-open-detail-in-new-window');
+if (formOpenInNewWindow) {
+  formOpenInNewWindow.addEventListener('change', async (event) => {
     try {
       const target = event.target as HTMLInputElement;
       await Settings.setJiraBacklogOpenDetailInNewWindow(target.checked);
+      hideFlash();
+    } catch (error) {
+      console.error('failed to save settings:', error);
+      showFlash('Failed to save setting. Please try again.');
+    }
+  });
+}
+
+const formHideCreateButton = document.forms.namedItem('form-jira-backlog-hide-create-button');
+if (formHideCreateButton) {
+  formHideCreateButton.addEventListener('change', async (event) => {
+    try {
+      const target = event.target as HTMLInputElement;
+      await Settings.setJiraBacklogHideCreateButton(target.checked);
       hideFlash();
     } catch (error) {
       console.error('failed to save settings:', error);

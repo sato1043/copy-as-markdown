@@ -9,17 +9,53 @@ console.log('[Copy as Markdown] JIRA backlog content script loaded');
 
 const CARD_SELECTOR = '[data-testid="software-backlog.card-list.card.card-contents.interaction-layer.accessible-card"]';
 const ISSUE_LINK_SELECTOR = '[data-testid="software-backlog.card-list.card.card-contents.screen-reader-key"]';
+const CREATE_BUTTON_SELECTOR = '[data-testid="software-backlog.card-list.inline-work-item-create.trigger-wrapper"]';
 const SETTING_KEY = 'jiraBacklogOpenDetailInNewWindow';
+const HIDE_CREATE_SETTING_KEY = 'jiraBacklogHideCreateButton';
 
-async function isFeatureEnabled(): Promise<boolean> {
-  console.log('[Copy as Markdown] Checking if feature is enabled...');
+async function isOpenInNewWindowEnabled(): Promise<boolean> {
+  console.log('[Copy as Markdown] Checking if open in new window is enabled...');
   try {
     const result = await browser.storage.sync.get({ [SETTING_KEY]: false });
-    console.log('[Copy as Markdown] Setting value:', result[SETTING_KEY]);
+    console.log('[Copy as Markdown] Open in new window setting value:', result[SETTING_KEY]);
     return result[SETTING_KEY] as boolean;
   } catch (error) {
-    console.error('[Copy as Markdown] Failed to read settings:', error);
+    console.error('[Copy as Markdown] Failed to read open in new window setting:', error);
     return false;
+  }
+}
+
+async function isHideCreateButtonEnabled(): Promise<boolean> {
+  console.log('[Copy as Markdown] Checking if hide create button is enabled...');
+  try {
+    const result = await browser.storage.sync.get({ [HIDE_CREATE_SETTING_KEY]: false });
+    console.log('[Copy as Markdown] Hide create button setting value:', result[HIDE_CREATE_SETTING_KEY]);
+    return result[HIDE_CREATE_SETTING_KEY] as boolean;
+  } catch (error) {
+    console.error('[Copy as Markdown] Failed to read hide create button setting:', error);
+    return false;
+  }
+}
+
+const HIDE_CREATE_BUTTON_STYLE_ID = 'copy-as-markdown-hide-create-button';
+
+function injectHideCreateButtonStyle(): void {
+  if (document.getElementById(HIDE_CREATE_BUTTON_STYLE_ID)) {
+    return; // Already injected
+  }
+
+  const style = document.createElement('style');
+  style.id = HIDE_CREATE_BUTTON_STYLE_ID;
+  style.textContent = `${CREATE_BUTTON_SELECTOR} { display: none !important; }`;
+  document.head.appendChild(style);
+  console.log('[Copy as Markdown] Hide create button style injected');
+}
+
+function removeHideCreateButtonStyle(): void {
+  const style = document.getElementById(HIDE_CREATE_BUTTON_STYLE_ID);
+  if (style) {
+    style.remove();
+    console.log('[Copy as Markdown] Hide create button style removed');
   }
 }
 
@@ -96,16 +132,24 @@ function observeDynamicContent(): void {
 
 async function init(): Promise<void> {
   console.log('[Copy as Markdown] init() called');
-  const enabled = await isFeatureEnabled();
-  if (!enabled) {
-    console.log('[Copy as Markdown] Feature is disabled, exiting');
-    return;
+
+  // Handle open in new window feature
+  const openInNewWindowEnabled = await isOpenInNewWindowEnabled();
+  if (openInNewWindowEnabled) {
+    attachClickListener();
+    observeDynamicContent();
+    console.log('[Copy as Markdown] JIRA backlog open in new window enabled');
+  } else {
+    console.log('[Copy as Markdown] Open in new window feature is disabled');
   }
 
-  attachClickListener();
-  observeDynamicContent();
-
-  console.log('[Copy as Markdown] JIRA backlog enhancement enabled');
+  // Handle hide create button feature
+  const hideCreateButtonEnabled = await isHideCreateButtonEnabled();
+  if (hideCreateButtonEnabled) {
+    injectHideCreateButtonStyle();
+  } else {
+    removeHideCreateButtonStyle();
+  }
 }
 
 // Listen for settings changes
@@ -114,6 +158,15 @@ browser.storage.sync.onChanged.addListener((changes) => {
     // Reload page to apply new setting
     // (simpler than managing listener state)
     window.location.reload();
+  }
+
+  if (HIDE_CREATE_SETTING_KEY in changes) {
+    const newValue = changes[HIDE_CREATE_SETTING_KEY].newValue as boolean;
+    if (newValue) {
+      injectHideCreateButtonStyle();
+    } else {
+      removeHideCreateButtonStyle();
+    }
   }
 });
 

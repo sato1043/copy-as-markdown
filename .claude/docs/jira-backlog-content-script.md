@@ -6,11 +6,15 @@
 
 | 項目 | 内容 |
 |------|------|
-| 機能名 | JIRA Backlog Open in New Window |
-| 設定キー | `jiraBacklogOpenDetailInNewWindow` |
 | 対象URL | `*://*.atlassian.net/jira/*` |
-| 動作 | バックログの課題カードクリックで新しいウィンドウを開く |
-| デフォルト | 無効（`false`） |
+| スクリプト | `dist/content-scripts/jira-backlog.js` |
+
+### 機能一覧
+
+| 機能名 | 設定キー | 動作 | デフォルト |
+|--------|---------|------|-----------|
+| Open in New Window | `jiraBacklogOpenDetailInNewWindow` | バックログの課題カードクリックで新しいウィンドウを開く | 無効 |
+| Hide Create Button | `jiraBacklogHideCreateButton` | バックログのインライン「作成」ボタンを非表示 | 無効 |
 
 ## 処理フロー
 
@@ -27,51 +31,41 @@
                 ▼
             init()
                 │
-                ├── isFeatureEnabled()
+                ├── [Open in New Window 機能]
+                │   isOpenInNewWindowEnabled()
                 │       │
                 │       ▼
                 │   browser.storage.sync.get()
                 │       │
-                │       └── false → 早期リターン（機能無効）
-                │       └── true  → 続行
+                │       ├── false → スキップ
+                │       └── true  → attachClickListener() + observeDynamicContent()
                 │
-                ├── attachClickListener()
-                │       │
-                │       ▼
-                │   document.addEventListener('click', handleCardClick, { capture: true })
-                │
-                └── observeDynamicContent()
+                └── [Hide Create Button 機能]
+                    isHideCreateButtonEnabled()
                         │
                         ▼
-                    MutationObserver（将来の拡張用）
+                    browser.storage.sync.get()
+                        │
+                        ├── false → removeHideCreateButtonStyle()
+                        └── true  → injectHideCreateButtonStyle()
 
-    ユーザー
+    [Open in New Window] ユーザーがバックログ課題カードをクリック
         │
-        │ バックログ課題カードをクリック
         ▼
     handleCardClick(event)
         │
-        ├── target.closest(CARD_SELECTOR)
-        │       │
-        │       └── null → リターン（カード外クリック）
-        │
-        ├── findIssueUrl(card)
-        │       │
-        │       ├── ISSUE_LINK_SELECTOR でリンク要素を検索
-        │       │       │
-        │       │       └── link.href があれば返す
-        │       │
-        │       └── フォールバック: aria-label から課題キーを抽出
-        │               │
-        │               └── /^([A-Z]+-\d+)/ にマッチ → `/browse/${match[1]}`
-        │
-        ├── event.preventDefault()
-        ├── event.stopPropagation()
-        │
+        ├── target.closest(CARD_SELECTOR) → null → リターン
+        ├── findIssueUrl(card) → null → リターン
+        ├── event.preventDefault() + stopPropagation()
         └── window.open(issueUrl, '_blank')
-                │
-                ▼
-            新しいウィンドウで課題ページを開く
+
+    [Hide Create Button] CSS注入による非表示
+        │
+        ▼
+    injectHideCreateButtonStyle()
+        │
+        └── <style> 要素を document.head に追加
+            CREATE_BUTTON_SELECTOR { display: none !important; }
 ```
 
 ## 関連ファイル
@@ -136,30 +130,33 @@
 
 ### 1. セレクタ定義
 
-**ファイル**: `src/content-scripts/jira-backlog.ts:10-12`
+**ファイル**: `src/content-scripts/jira-backlog.ts:10-14`
 
 ```typescript
 const CARD_SELECTOR = '[data-testid="software-backlog.card-list.card.card-contents.interaction-layer.accessible-card"]';
 const ISSUE_LINK_SELECTOR = '[data-testid="software-backlog.card-list.card.card-contents.screen-reader-key"]';
+const CREATE_BUTTON_SELECTOR = '[data-testid="software-backlog.card-list.inline-work-item-create.trigger-wrapper"]';
 const SETTING_KEY = 'jiraBacklogOpenDetailInNewWindow';
+const HIDE_CREATE_SETTING_KEY = 'jiraBacklogHideCreateButton';
 ```
 
-| セレクタ | 対象要素 |
-|---------|---------|
+| セレクタ/キー | 対象 |
+|--------------|------|
 | `CARD_SELECTOR` | クリック可能な課題カード（アクセシビリティ用） |
 | `ISSUE_LINK_SELECTOR` | スクリーンリーダー用の課題リンク要素 |
+| `CREATE_BUTTON_SELECTOR` | インライン「作成」ボタンのラッパー要素 |
 
 ### 2. 設定読み込み
 
-**ファイル**: `src/content-scripts/jira-backlog.ts:14-24`
+**ファイル**: `src/content-scripts/jira-backlog.ts:16-26`
 
 ```typescript
-async function isFeatureEnabled(): Promise<boolean> {
+async function isOpenInNewWindowEnabled(): Promise<boolean> {
   try {
     const result = await browser.storage.sync.get({ [SETTING_KEY]: false });
     return result[SETTING_KEY] as boolean;
   } catch (error) {
-    console.error('[Copy as Markdown] Failed to read settings:', error);
+    console.error('[Copy as Markdown] Failed to read open in new window setting:', error);
     return false;
   }
 }
@@ -169,6 +166,7 @@ async function isFeatureEnabled(): Promise<boolean> {
 - `browser.storage.sync.get()` で設定を取得
 - デフォルト値は `false`（無効）
 - エラー時も `false` を返す（安全側に倒す）
+- `isHideCreateButtonEnabled()` も同様のパターンで実装
 
 ### 3. 課題URL抽出
 
@@ -280,17 +278,54 @@ if (fs.existsSync(contentScriptsDir)) {
 
 ```typescript
 const SKJiraBacklogOpenDetailInNewWindow = 'jiraBacklogOpenDetailInNewWindow';
+const SKJiraBacklogHideCreateButton = 'jiraBacklogHideCreateButton';
 ```
 
 ### オプションページ
 
 **ファイル**: `src/static/options-jira.html`
 
-チェックボックスで機能の有効/無効を切り替え。
+| チェックボックス | 設定キー | 説明 |
+|-----------------|---------|------|
+| Open issue detail in new window | `jiraBacklogOpenDetailInNewWindow` | 課題カードクリックで新ウィンドウを開く |
+| Hide "Create" button | `jiraBacklogHideCreateButton` | インライン作成ボタンを非表示 |
 
 **ナビゲーション**:
 - 全オプションページのメニューに「JIRA」リンクを追加
 - `options-jira.html` へ遷移可能
+
+### Hide Create Button の実装詳細
+
+**CSS注入方式を採用した理由**:
+- 動的に追加される要素にも自動的に適用される
+- `display: none !important` でJIRAのスタイルを確実に上書き
+- ページリロードなしで即座に反映可能
+
+```typescript
+const HIDE_CREATE_BUTTON_STYLE_ID = 'copy-as-markdown-hide-create-button';
+
+function injectHideCreateButtonStyle(): void {
+  if (document.getElementById(HIDE_CREATE_BUTTON_STYLE_ID)) {
+    return; // 重複注入を防止
+  }
+
+  const style = document.createElement('style');
+  style.id = HIDE_CREATE_BUTTON_STYLE_ID;
+  style.textContent = `${CREATE_BUTTON_SELECTOR} { display: none !important; }`;
+  document.head.appendChild(style);
+}
+
+function removeHideCreateButtonStyle(): void {
+  const style = document.getElementById(HIDE_CREATE_BUTTON_STYLE_ID);
+  if (style) {
+    style.remove();
+  }
+}
+```
+
+**設定変更時の動作**:
+- `jiraBacklogHideCreateButton`: 即座にスタイルを注入/削除（リロード不要）
+- `jiraBacklogOpenDetailInNewWindow`: ページをリロード（リスナー管理の簡略化のため）
 
 ## テスト
 
