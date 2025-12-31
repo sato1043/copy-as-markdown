@@ -54,6 +54,12 @@ export const test = base.extend<ExtensionFixtures>({
     if (!page) {
       page = await context.newPage();
     }
+
+    // Console output logging for debugging
+    page.on('console', (msg) => {
+      console.log(`[PAGE ${msg.type()}] ${msg.text()}`);
+    });
+
     await use(page);
     // Don't close it here - it will be closed with context
   },
@@ -75,6 +81,12 @@ export const test = base.extend<ExtensionFixtures>({
   },
   serviceWorker: async ({ context }, use) => {
     const worker = await getServiceWorker(context);
+
+    // Service Worker console output logging for debugging
+    worker.on('console', (msg) => {
+      console.log(`[SW ${msg.type()}] ${msg.text()}`);
+    });
+
     await setMockClipboardMode(worker, true);
     await use(worker);
   },
