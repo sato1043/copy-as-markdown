@@ -25,7 +25,7 @@ const HIDDEN_TABS_SETTING_KEY = 'jiraSpaceNavHiddenTabs';
 // Fixed list of space navigation tabs (for reference)
 // Path values used in settings and CSS selectors:
 // summary, timeline, backlog, boards, calendar, list, form,
-// development, code, archived-work-items, pages, shortcuts, addtabs
+// development, code, archived-work-items, pages, goals, components, security, deployments, issues, shortcuts, addtabs
 
 async function isOpenInNewWindowEnabled(): Promise<boolean> {
   console.log('[Copy as Markdown] Checking if backlog open in new window is enabled...');

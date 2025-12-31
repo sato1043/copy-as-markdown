@@ -377,6 +377,11 @@ function removeHideCreateButtonStyle(): void {
 | code | コード | href |
 | archived-work-items | アーカイブ済みの作業項目 | href |
 | pages | ページ | href |
+| goals | ゴール | href |
+| components | コンポーネント | href |
+| security | セキュリティ | href |
+| deployments | デプロイ | href |
+| issues | すベての作業 | href |
 | shortcuts | ショートカット | data-testid |
 | addtabs | タブを追加 | data-testid |
 
