@@ -16,6 +16,7 @@
 | Backlog Open in New Window | `jiraBacklogOpenDetailInNewWindow` | バックログの課題カードクリックで新しいウィンドウを開く | 無効 |
 | Timeline Open in New Window | `jiraTimelineOpenDetailInNewWindow` | タイムラインの課題行クリックで新しいウィンドウを開く | 無効 |
 | Hide Create Button | `jiraBacklogHideCreateButton` | バックログのインライン「作成」ボタンを非表示 | 無効 |
+| Hide Estimate Field | `jiraBacklogHideEstimateField` | バックログのストーリーポイント（見積もり）フィールドを非表示 | 無効 |
 | Hidden Tabs | `jiraSpaceNavHiddenTabs` | スペースナビゲーションの指定タブを非表示 | 空配列（全表示） |
 
 ## 処理フロー
@@ -309,6 +310,7 @@ if (fs.existsSync(contentScriptsDir)) {
 const SKJiraBacklogOpenDetailInNewWindow = 'jiraBacklogOpenDetailInNewWindow';
 const SKJiraTimelineOpenDetailInNewWindow = 'jiraTimelineOpenDetailInNewWindow';
 const SKJiraBacklogHideCreateButton = 'jiraBacklogHideCreateButton';
+const SKJiraBacklogHideEstimateField = 'jiraBacklogHideEstimateField';
 const SKJiraSpaceNavHiddenTabs = 'jiraSpaceNavHiddenTabs';
 ```
 
@@ -321,6 +323,7 @@ const SKJiraSpaceNavHiddenTabs = 'jiraSpaceNavHiddenTabs';
 | Backlog Issue Behavior | `jiraBacklogOpenDetailInNewWindow` | バックログ課題カードクリックで新ウィンドウを開く |
 | Timeline Issue Behavior | `jiraTimelineOpenDetailInNewWindow` | タイムライン課題行クリックで新ウィンドウを開く |
 | Hide "Create" button | `jiraBacklogHideCreateButton` | インライン作成ボタンを非表示 |
+| Hide estimate field | `jiraBacklogHideEstimateField` | ストーリーポイント（見積もり）フィールドを非表示 |
 | Space Navigation Hidden Tabs | `jiraSpaceNavHiddenTabs` | チェックしたタブを非表示（複数選択可） |
 
 **ナビゲーション**:
@@ -358,7 +361,17 @@ function removeHideCreateButtonStyle(): void {
 
 **設定変更時の動作**:
 - `jiraBacklogHideCreateButton`: 即座にスタイルを注入/削除（リロード不要）
+- `jiraBacklogHideEstimateField`: 即座にスタイルを注入/削除（リロード不要）
 - `jiraBacklogOpenDetailInNewWindow`: ページをリロード（リスナー管理の簡略化のため）
+
+### Hide Estimate Field の実装詳細
+
+**対象セレクタ**:
+```typescript
+const ESTIMATE_FIELD_SELECTOR = '[data-testid="software-backlog.card-list.card.card-contents.estimate-field-wrapper"]';
+```
+
+Hide Create Button と同様のCSS注入方式で実装。
 
 ### Hidden Tabs の実装詳細
 

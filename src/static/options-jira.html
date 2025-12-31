@@ -52,16 +52,6 @@
     <div class="column">
       <div class="box content">
         <h2 class="title is-3">JIRA Settings</h2>
-        <form id="form-jira-backlog-open-detail-in-new-window" class="field">
-          <label class="label">Backlog Issue Behavior</label>
-          <div class="control">
-            <label class="checkbox"><input type="checkbox" name="jiraBacklogOpenDetailInNewWindow"/> Open issue detail in new window</label>
-          </div>
-          <p class="help">
-            When enabled, clicking on an issue card in JIRA backlog will open the issue detail in a new window/tab
-            instead of the default panel view. This setting only affects pages on <code>*.atlassian.net/jira/*</code>.
-          </p>
-        </form>
         <form id="form-jira-timeline-open-detail-in-new-window" class="field">
           <label class="label">Timeline Issue Behavior</label>
           <div class="control">
@@ -72,6 +62,16 @@
             instead of the default panel view. This setting only affects pages on <code>*.atlassian.net/jira/*</code>.
           </p>
         </form>
+        <form id="form-jira-backlog-open-detail-in-new-window" class="field">
+          <label class="label">Backlog Issue Behavior</label>
+          <div class="control">
+            <label class="checkbox"><input type="checkbox" name="jiraBacklogOpenDetailInNewWindow"/> Open issue detail in new window</label>
+          </div>
+          <p class="help">
+            When enabled, clicking on an issue card in JIRA backlog will open the issue detail in a new window/tab
+            instead of the default panel view. This setting only affects pages on <code>*.atlassian.net/jira/*</code>.
+          </p>
+        </form>
         <form id="form-jira-backlog-hide-create-button" class="field">
           <label class="label">Backlog UI</label>
           <div class="control">
@@ -79,6 +79,14 @@
           </div>
           <p class="help">
             When enabled, hides the inline "Create" button in JIRA backlog to prevent accidental clicks.
+          </p>
+        </form>
+        <form id="form-jira-backlog-hide-estimate-field" class="field">
+          <div class="control">
+            <label class="checkbox"><input type="checkbox" name="jiraBacklogHideEstimateField"/> Hide estimate field (story points)</label>
+          </div>
+          <p class="help">
+            When enabled, hides the story point estimate field on backlog issue cards.
           </p>
         </form>
         <form id="form-jira-space-nav-hidden-tabs" class="field">

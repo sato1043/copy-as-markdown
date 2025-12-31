@@ -11,6 +11,7 @@ console.log('[Copy as Markdown] JIRA backlog content script loaded');
 const CARD_SELECTOR = '[data-testid="software-backlog.card-list.card.card-contents.interaction-layer.accessible-card"]';
 const ISSUE_LINK_SELECTOR = '[data-testid="software-backlog.card-list.card.card-contents.screen-reader-key"]';
 const CREATE_BUTTON_SELECTOR = '[data-testid="software-backlog.card-list.inline-work-item-create.trigger-wrapper"]';
+const ESTIMATE_FIELD_SELECTOR = '[data-testid="software-backlog.card-list.card.card-contents.estimate-field-wrapper"]';
 
 // Timeline selectors
 const TIMELINE_ROW_SELECTOR = '[data-testid^="roadmap.timeline-table.components.list-item.container-"]';
@@ -20,6 +21,7 @@ const TIMELINE_LINK_SELECTOR = '[data-testid="roadmap.timeline-table-kit.ui.list
 const SETTING_KEY = 'jiraBacklogOpenDetailInNewWindow';
 const TIMELINE_SETTING_KEY = 'jiraTimelineOpenDetailInNewWindow';
 const HIDE_CREATE_SETTING_KEY = 'jiraBacklogHideCreateButton';
+const HIDE_ESTIMATE_SETTING_KEY = 'jiraBacklogHideEstimateField';
 const HIDDEN_TABS_SETTING_KEY = 'jiraSpaceNavHiddenTabs';
 
 // Fixed list of space navigation tabs (for reference)
@@ -63,6 +65,18 @@ async function isHideCreateButtonEnabled(): Promise<boolean> {
   }
 }
 
+async function isHideEstimateFieldEnabled(): Promise<boolean> {
+  console.log('[Copy as Markdown] Checking if hide estimate field is enabled...');
+  try {
+    const result = await browser.storage.sync.get({ [HIDE_ESTIMATE_SETTING_KEY]: false });
+    console.log('[Copy as Markdown] Hide estimate field setting value:', result[HIDE_ESTIMATE_SETTING_KEY]);
+    return result[HIDE_ESTIMATE_SETTING_KEY] as boolean;
+  } catch (error) {
+    console.error('[Copy as Markdown] Failed to read hide estimate field setting:', error);
+    return false;
+  }
+}
+
 async function getHiddenTabs(): Promise<string[]> {
   console.log('[Copy as Markdown] Getting hidden tabs...');
   try {
@@ -94,6 +108,28 @@ function removeHideCreateButtonStyle(): void {
   if (style) {
     style.remove();
     console.log('[Copy as Markdown] Hide create button style removed');
+  }
+}
+
+const HIDE_ESTIMATE_FIELD_STYLE_ID = 'copy-as-markdown-hide-estimate-field';
+
+function injectHideEstimateFieldStyle(): void {
+  if (document.getElementById(HIDE_ESTIMATE_FIELD_STYLE_ID)) {
+    return; // Already injected
+  }
+
+  const style = document.createElement('style');
+  style.id = HIDE_ESTIMATE_FIELD_STYLE_ID;
+  style.textContent = `div:has(> ${ESTIMATE_FIELD_SELECTOR}) { display: none !important; }`;
+  document.head.appendChild(style);
+  console.log('[Copy as Markdown] Hide estimate field style injected');
+}
+
+function removeHideEstimateFieldStyle(): void {
+  const style = document.getElementById(HIDE_ESTIMATE_FIELD_STYLE_ID);
+  if (style) {
+    style.remove();
+    console.log('[Copy as Markdown] Hide estimate field style removed');
   }
 }
 
@@ -283,6 +319,14 @@ async function init(): Promise<void> {
     removeHideCreateButtonStyle();
   }
 
+  // Handle hide estimate field feature
+  const hideEstimateFieldEnabled = await isHideEstimateFieldEnabled();
+  if (hideEstimateFieldEnabled) {
+    injectHideEstimateFieldStyle();
+  } else {
+    removeHideEstimateFieldStyle();
+  }
+
   // Handle hide space navigation tabs feature
   const hiddenTabs = await getHiddenTabs();
   injectHideTabsStyle(hiddenTabs);
@@ -302,6 +346,15 @@ browser.storage.sync.onChanged.addListener((changes) => {
       injectHideCreateButtonStyle();
     } else {
       removeHideCreateButtonStyle();
+    }
+  }
+
+  if (HIDE_ESTIMATE_SETTING_KEY in changes) {
+    const newValue = changes[HIDE_ESTIMATE_SETTING_KEY].newValue as boolean;
+    if (newValue) {
+      injectHideEstimateFieldStyle();
+    } else {
+      removeHideEstimateFieldStyle();
     }
   }
 

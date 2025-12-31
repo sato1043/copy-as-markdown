@@ -38,6 +38,12 @@ async function loadSettings(): Promise<void> {
       if (checkbox) checkbox.checked = settings.jiraBacklogHideCreateButton;
     }
 
+    const formHideEstimateField = document.forms.namedItem('form-jira-backlog-hide-estimate-field');
+    if (formHideEstimateField) {
+      const checkbox = formHideEstimateField.elements.namedItem('jiraBacklogHideEstimateField') as HTMLInputElement | null;
+      if (checkbox) checkbox.checked = settings.jiraBacklogHideEstimateField;
+    }
+
     const formHiddenTabs = document.forms.namedItem('form-jira-space-nav-hidden-tabs');
     if (formHiddenTabs) {
       const checkboxes = formHiddenTabs.querySelectorAll<HTMLInputElement>('input[name="hiddenTab"]');
@@ -91,6 +97,20 @@ if (formHideCreateButton) {
     try {
       const target = event.target as HTMLInputElement;
       await Settings.setJiraBacklogHideCreateButton(target.checked);
+      hideFlash();
+    } catch (error) {
+      console.error('failed to save settings:', error);
+      showFlash('Failed to save setting. Please try again.');
+    }
+  });
+}
+
+const formHideEstimateField = document.forms.namedItem('form-jira-backlog-hide-estimate-field');
+if (formHideEstimateField) {
+  formHideEstimateField.addEventListener('change', async (event) => {
+    try {
+      const target = event.target as HTMLInputElement;
+      await Settings.setJiraBacklogHideEstimateField(target.checked);
       hideFlash();
     } catch (error) {
       console.error('failed to save settings:', error);
