@@ -31,7 +31,7 @@ const connections = new Map();
 /**
  * console出力のタイプに応じた色を返す
  * @param {string} type
- * @returns {string}
+ * @returns {string} ANSIカラーコード
  */
 function getColor(type) {
   const colors = {
@@ -50,7 +50,7 @@ const RESET = '\x1B[0m';
  * ページタイトルを短縮
  * @param {string} title
  * @param {number} maxLen
- * @returns {string}
+ * @returns {string} 短縮されたタイトル
  */
 function truncate(title, maxLen = 30) {
   if (!title) return '(no title)';

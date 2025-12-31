@@ -121,7 +121,7 @@
   ],
   "content_scripts": [
     {
-      "matches": ["*://*.atlassian.net/jira/*"],
+      "matches": ["*://*.atlassian.net/jira/*", "*://*.atlassian.net/browse/*"],
       "js": [
         "dist/vendor/browser-polyfill.js",
         "dist/content-scripts/jira-backlog.js"
