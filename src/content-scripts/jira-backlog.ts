@@ -18,8 +18,6 @@ const CARD_SELECTOR = '[data-testid="software-backlog.card-list.card.card-conten
 const ISSUE_LINK_SELECTOR = '[data-testid="software-backlog.card-list.card.card-contents.screen-reader-key"]';
 const CREATE_BUTTON_SELECTOR = '[data-testid="software-backlog.card-list.inline-work-item-create.trigger-wrapper"]';
 const ESTIMATE_FIELD_SELECTOR = '[data-testid="software-backlog.card-list.card.card-contents.estimate-field-wrapper"]';
-const EPIC_FIELD_ADD_BUTTON_SELECTOR = '[data-testid="issue-field-parent-switcher.ui.edit.suggested-parents-dropdown.add-parent-button"]';
-const EPIC_FIELD_TRIGGER_BUTTON_SELECTOR = '[data-testid="issue-field-parent-switcher.ui.edit.suggested-parents-dropdown.trigger-button"]';
 
 // Timeline
 const TIMELINE_ROW_SELECTOR = '[data-testid^="roadmap.timeline-table.components.list-item.container-"]';
@@ -33,7 +31,6 @@ const SETTING_KEY_BACKLOG_OPEN_NEW_WINDOW = 'jiraBacklogOpenDetailInNewWindow';
 const SETTING_KEY_TIMELINE_OPEN_NEW_WINDOW = 'jiraTimelineOpenDetailInNewWindow';
 const SETTING_KEY_HIDE_CREATE_BUTTON = 'jiraBacklogHideCreateButton';
 const SETTING_KEY_HIDE_ESTIMATE_FIELD = 'jiraBacklogHideEstimateField';
-const SETTING_KEY_HIDE_EPIC_FIELD = 'jiraBacklogHideEpicField';
 const SETTING_KEY_HIDE_COLUMNS_ON_TITLE_HOVER = 'jiraBacklogHideColumnsOnTitleHover';
 const SETTING_KEY_HIDDEN_TABS = 'jiraSpaceNavHiddenTabs';
 
@@ -130,15 +127,6 @@ const STYLE_CONFIGS: StyleConfig[] = [
     styleId: 'copy-as-markdown-hide-estimate-field',
     css: `div:has(> ${ESTIMATE_FIELD_SELECTOR}) { display: none !important; }`,
     logName: 'Hide estimate field',
-  },
-  {
-    settingKey: SETTING_KEY_HIDE_EPIC_FIELD,
-    styleId: 'copy-as-markdown-hide-epic-field',
-    css: `
-      div:has(> div > div > div > ${EPIC_FIELD_ADD_BUTTON_SELECTOR}) { display: none !important; }
-      div:has(> div > div > div > ${EPIC_FIELD_TRIGGER_BUTTON_SELECTOR}) { display: none !important; }
-    `,
-    logName: 'Hide epic field',
   },
   {
     settingKey: SETTING_KEY_HIDE_COLUMNS_ON_TITLE_HOVER,

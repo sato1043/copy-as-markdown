@@ -44,12 +44,6 @@ async function loadSettings(): Promise<void> {
       if (checkbox) checkbox.checked = settings.jiraBacklogHideEstimateField;
     }
 
-    const formHideEpicField = document.forms.namedItem('form-jira-backlog-hide-epic-field');
-    if (formHideEpicField) {
-      const checkbox = formHideEpicField.elements.namedItem('jiraBacklogHideEpicField') as HTMLInputElement | null;
-      if (checkbox) checkbox.checked = settings.jiraBacklogHideEpicField;
-    }
-
     const formHideColumnsOnTitleHover = document.forms.namedItem('form-jira-backlog-hide-columns-on-title-hover');
     if (formHideColumnsOnTitleHover) {
       const checkbox = formHideColumnsOnTitleHover.elements.namedItem('jiraBacklogHideColumnsOnTitleHover') as HTMLInputElement | null;
@@ -135,20 +129,6 @@ if (formHideEstimateField) {
     try {
       const target = event.target as HTMLInputElement;
       await Settings.setJiraBacklogHideEstimateField(target.checked);
-      hideFlash();
-    } catch (error) {
-      console.error('failed to save settings:', error);
-      showFlash('Failed to save setting. Please try again.');
-    }
-  });
-}
-
-const formHideEpicField = document.forms.namedItem('form-jira-backlog-hide-epic-field');
-if (formHideEpicField) {
-  formHideEpicField.addEventListener('change', async (event) => {
-    try {
-      const target = event.target as HTMLInputElement;
-      await Settings.setJiraBacklogHideEpicField(target.checked);
       hideFlash();
     } catch (error) {
       console.error('failed to save settings:', error);
