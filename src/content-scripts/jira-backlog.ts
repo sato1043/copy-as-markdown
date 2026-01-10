@@ -1,13 +1,19 @@
 /**
  * JIRA Backlog Content Script
  *
- * When enabled, clicking on a backlog issue card opens the issue in a new window
- * instead of the default behavior (opening in the same window/panel).
+ * Provides customization features for JIRA backlog and timeline pages:
+ * - Open issue details in new window
+ * - Hide UI elements (create button, estimate field, epic field)
+ * - Hide space navigation tabs
  */
 
 console.log('[Copy as Markdown] JIRA backlog content script loaded');
 
-// Backlog selectors
+// =============================================================================
+// Selectors
+// =============================================================================
+
+// Backlog
 const CARD_SELECTOR = '[data-testid="software-backlog.card-list.card.card-contents.interaction-layer.accessible-card"]';
 const ISSUE_LINK_SELECTOR = '[data-testid="software-backlog.card-list.card.card-contents.screen-reader-key"]';
 const CREATE_BUTTON_SELECTOR = '[data-testid="software-backlog.card-list.inline-work-item-create.trigger-wrapper"]';
@@ -15,180 +21,138 @@ const ESTIMATE_FIELD_SELECTOR = '[data-testid="software-backlog.card-list.card.c
 const EPIC_FIELD_ADD_BUTTON_SELECTOR = '[data-testid="issue-field-parent-switcher.ui.edit.suggested-parents-dropdown.add-parent-button"]';
 const EPIC_FIELD_TRIGGER_BUTTON_SELECTOR = '[data-testid="issue-field-parent-switcher.ui.edit.suggested-parents-dropdown.trigger-button"]';
 
-// Timeline selectors
+// Timeline
 const TIMELINE_ROW_SELECTOR = '[data-testid^="roadmap.timeline-table.components.list-item.container-"]';
 const TIMELINE_LINK_SELECTOR = '[data-testid="roadmap.timeline-table-kit.ui.list-item-content.summary.key"]';
 
-// Setting keys
-const SETTING_KEY = 'jiraBacklogOpenDetailInNewWindow';
-const TIMELINE_SETTING_KEY = 'jiraTimelineOpenDetailInNewWindow';
-const HIDE_CREATE_SETTING_KEY = 'jiraBacklogHideCreateButton';
-const HIDE_ESTIMATE_SETTING_KEY = 'jiraBacklogHideEstimateField';
-const HIDE_EPIC_SETTING_KEY = 'jiraBacklogHideEpicField';
-const HIDDEN_TABS_SETTING_KEY = 'jiraSpaceNavHiddenTabs';
+// =============================================================================
+// Setting Keys
+// =============================================================================
 
-// Fixed list of space navigation tabs (for reference)
-// Path values used in settings and CSS selectors:
-// summary, timeline, backlog, boards, calendar, list, form,
-// development, code, archived-work-items, pages, goals, components, security, deployments, issues, shortcuts, addtabs
+const SETTING_KEY_BACKLOG_OPEN_NEW_WINDOW = 'jiraBacklogOpenDetailInNewWindow';
+const SETTING_KEY_TIMELINE_OPEN_NEW_WINDOW = 'jiraTimelineOpenDetailInNewWindow';
+const SETTING_KEY_HIDE_CREATE_BUTTON = 'jiraBacklogHideCreateButton';
+const SETTING_KEY_HIDE_ESTIMATE_FIELD = 'jiraBacklogHideEstimateField';
+const SETTING_KEY_HIDE_EPIC_FIELD = 'jiraBacklogHideEpicField';
+const SETTING_KEY_HIDDEN_TABS = 'jiraSpaceNavHiddenTabs';
 
-async function isOpenInNewWindowEnabled(): Promise<boolean> {
-  console.log('[Copy as Markdown] Checking if backlog open in new window is enabled...');
+// =============================================================================
+// Generic Helpers
+// =============================================================================
+
+/**
+ * Reads a boolean setting from sync storage
+ */
+async function getBooleanSetting(key: string, logName: string): Promise<boolean> {
+  console.log(`[Copy as Markdown] Checking if ${logName} is enabled...`);
   try {
-    const result = await browser.storage.sync.get({ [SETTING_KEY]: false });
-    console.log('[Copy as Markdown] Backlog open in new window setting value:', result[SETTING_KEY]);
-    return result[SETTING_KEY] as boolean;
+    const result = await browser.storage.sync.get({ [key]: false });
+    console.log(`[Copy as Markdown] ${logName} setting value:`, result[key]);
+    return result[key] as boolean;
   } catch (error) {
-    console.error('[Copy as Markdown] Failed to read backlog open in new window setting:', error);
+    console.error(`[Copy as Markdown] Failed to read ${logName} setting:`, error);
     return false;
   }
 }
 
-async function isTimelineOpenInNewWindowEnabled(): Promise<boolean> {
-  console.log('[Copy as Markdown] Checking if timeline open in new window is enabled...');
+/**
+ * Reads a string array setting from sync storage
+ */
+async function getArraySetting(key: string, logName: string): Promise<string[]> {
+  console.log(`[Copy as Markdown] Getting ${logName}...`);
   try {
-    const result = await browser.storage.sync.get({ [TIMELINE_SETTING_KEY]: false });
-    console.log('[Copy as Markdown] Timeline open in new window setting value:', result[TIMELINE_SETTING_KEY]);
-    return result[TIMELINE_SETTING_KEY] as boolean;
+    const result = await browser.storage.sync.get({ [key]: [] });
+    console.log(`[Copy as Markdown] ${logName}:`, result[key]);
+    return result[key] as string[];
   } catch (error) {
-    console.error('[Copy as Markdown] Failed to read timeline open in new window setting:', error);
-    return false;
-  }
-}
-
-async function isHideCreateButtonEnabled(): Promise<boolean> {
-  console.log('[Copy as Markdown] Checking if hide create button is enabled...');
-  try {
-    const result = await browser.storage.sync.get({ [HIDE_CREATE_SETTING_KEY]: false });
-    console.log('[Copy as Markdown] Hide create button setting value:', result[HIDE_CREATE_SETTING_KEY]);
-    return result[HIDE_CREATE_SETTING_KEY] as boolean;
-  } catch (error) {
-    console.error('[Copy as Markdown] Failed to read hide create button setting:', error);
-    return false;
-  }
-}
-
-async function isHideEstimateFieldEnabled(): Promise<boolean> {
-  console.log('[Copy as Markdown] Checking if hide estimate field is enabled...');
-  try {
-    const result = await browser.storage.sync.get({ [HIDE_ESTIMATE_SETTING_KEY]: false });
-    console.log('[Copy as Markdown] Hide estimate field setting value:', result[HIDE_ESTIMATE_SETTING_KEY]);
-    return result[HIDE_ESTIMATE_SETTING_KEY] as boolean;
-  } catch (error) {
-    console.error('[Copy as Markdown] Failed to read hide estimate field setting:', error);
-    return false;
-  }
-}
-
-async function isHideEpicFieldEnabled(): Promise<boolean> {
-  console.log('[Copy as Markdown] Checking if hide epic field is enabled...');
-  try {
-    const result = await browser.storage.sync.get({ [HIDE_EPIC_SETTING_KEY]: false });
-    console.log('[Copy as Markdown] Hide epic field setting value:', result[HIDE_EPIC_SETTING_KEY]);
-    return result[HIDE_EPIC_SETTING_KEY] as boolean;
-  } catch (error) {
-    console.error('[Copy as Markdown] Failed to read hide epic field setting:', error);
-    return false;
-  }
-}
-
-async function getHiddenTabs(): Promise<string[]> {
-  console.log('[Copy as Markdown] Getting hidden tabs...');
-  try {
-    const result = await browser.storage.sync.get({ [HIDDEN_TABS_SETTING_KEY]: [] });
-    console.log('[Copy as Markdown] Hidden tabs:', result[HIDDEN_TABS_SETTING_KEY]);
-    return result[HIDDEN_TABS_SETTING_KEY] as string[];
-  } catch (error) {
-    console.error('[Copy as Markdown] Failed to read hidden tabs setting:', error);
+    console.error(`[Copy as Markdown] Failed to read ${logName} setting:`, error);
     return [];
   }
 }
 
-const HIDE_CREATE_BUTTON_STYLE_ID = 'copy-as-markdown-hide-create-button';
-
-function injectHideCreateButtonStyle(): void {
-  if (document.getElementById(HIDE_CREATE_BUTTON_STYLE_ID)) {
+/**
+ * Injects a style element into the document head
+ */
+function injectStyle(styleId: string, css: string, logName: string): void {
+  if (document.getElementById(styleId)) {
     return; // Already injected
   }
-
   const style = document.createElement('style');
-  style.id = HIDE_CREATE_BUTTON_STYLE_ID;
-  style.textContent = `${CREATE_BUTTON_SELECTOR} { display: none !important; }`;
+  style.id = styleId;
+  style.textContent = css;
   document.head.appendChild(style);
-  console.log('[Copy as Markdown] Hide create button style injected');
+  console.log(`[Copy as Markdown] ${logName} style injected`);
 }
 
-function removeHideCreateButtonStyle(): void {
-  const style = document.getElementById(HIDE_CREATE_BUTTON_STYLE_ID);
+/**
+ * Removes a style element from the document
+ */
+function removeStyle(styleId: string, logName: string): void {
+  const style = document.getElementById(styleId);
   if (style) {
     style.remove();
-    console.log('[Copy as Markdown] Hide create button style removed');
+    console.log(`[Copy as Markdown] ${logName} style removed`);
   }
 }
 
-const HIDE_ESTIMATE_FIELD_STYLE_ID = 'copy-as-markdown-hide-estimate-field';
-
-function injectHideEstimateFieldStyle(): void {
-  if (document.getElementById(HIDE_ESTIMATE_FIELD_STYLE_ID)) {
-    return; // Already injected
-  }
-
-  const style = document.createElement('style');
-  style.id = HIDE_ESTIMATE_FIELD_STYLE_ID;
-  style.textContent = `div:has(> ${ESTIMATE_FIELD_SELECTOR}) { display: none !important; }`;
-  document.head.appendChild(style);
-  console.log('[Copy as Markdown] Hide estimate field style injected');
-}
-
-function removeHideEstimateFieldStyle(): void {
-  const style = document.getElementById(HIDE_ESTIMATE_FIELD_STYLE_ID);
-  if (style) {
-    style.remove();
-    console.log('[Copy as Markdown] Hide estimate field style removed');
+/**
+ * Toggles a style based on enabled state
+ */
+function toggleStyle(styleId: string, css: string, logName: string, enabled: boolean): void {
+  if (enabled) {
+    injectStyle(styleId, css, logName);
+  } else {
+    removeStyle(styleId, logName);
   }
 }
 
-const HIDE_EPIC_FIELD_STYLE_ID = 'copy-as-markdown-hide-epic-field';
+// =============================================================================
+// Style Configurations
+// =============================================================================
 
-function injectHideEpicFieldStyle(): void {
-  if (document.getElementById(HIDE_EPIC_FIELD_STYLE_ID)) {
-    return; // Already injected
-  }
-
-  const style = document.createElement('style');
-  style.id = HIDE_EPIC_FIELD_STYLE_ID;
-  // Hide the container div 4 levels up from the button (both add-parent-button and trigger-button)
-  style.textContent = `
-    div:has(> div > div > div > ${EPIC_FIELD_ADD_BUTTON_SELECTOR}) { display: none !important; }
-    div:has(> div > div > div > ${EPIC_FIELD_TRIGGER_BUTTON_SELECTOR}) { display: none !important; }
-  `;
-  document.head.appendChild(style);
-  console.log('[Copy as Markdown] Hide epic field style injected');
+interface StyleConfig {
+  settingKey: string;
+  styleId: string;
+  css: string;
+  logName: string;
 }
 
-function removeHideEpicFieldStyle(): void {
-  const style = document.getElementById(HIDE_EPIC_FIELD_STYLE_ID);
-  if (style) {
-    style.remove();
-    console.log('[Copy as Markdown] Hide epic field style removed');
-  }
-}
+const STYLE_CONFIGS: StyleConfig[] = [
+  {
+    settingKey: SETTING_KEY_HIDE_CREATE_BUTTON,
+    styleId: 'copy-as-markdown-hide-create-button',
+    css: `${CREATE_BUTTON_SELECTOR} { display: none !important; }`,
+    logName: 'Hide create button',
+  },
+  {
+    settingKey: SETTING_KEY_HIDE_ESTIMATE_FIELD,
+    styleId: 'copy-as-markdown-hide-estimate-field',
+    css: `div:has(> ${ESTIMATE_FIELD_SELECTOR}) { display: none !important; }`,
+    logName: 'Hide estimate field',
+  },
+  {
+    settingKey: SETTING_KEY_HIDE_EPIC_FIELD,
+    styleId: 'copy-as-markdown-hide-epic-field',
+    css: `
+      div:has(> div > div > div > ${EPIC_FIELD_ADD_BUTTON_SELECTOR}) { display: none !important; }
+      div:has(> div > div > div > ${EPIC_FIELD_TRIGGER_BUTTON_SELECTOR}) { display: none !important; }
+    `,
+    logName: 'Hide epic field',
+  },
+];
+
+// =============================================================================
+// Hidden Tabs Style (special handling due to dynamic CSS generation)
+// =============================================================================
 
 const HIDE_TABS_STYLE_ID = 'copy-as-markdown-hide-space-nav-tabs';
 
-function injectHideTabsStyle(hiddenTabs: string[]): void {
-  // Remove existing style first
-  removeHideTabsStyle();
-
+function generateHiddenTabsCss(hiddenTabs: string[]): string {
   if (hiddenTabs.length === 0) {
-    return;
+    return '';
   }
 
-  const style = document.createElement('style');
-  style.id = HIDE_TABS_STYLE_ID;
-
-  // Generate CSS selectors for each hidden tab
-  const cssRules = hiddenTabs.map((tabPath) => {
+  return hiddenTabs.map((tabPath) => {
     // shortcuts and addtabs use button with data-testid instead of anchor with href
     if (tabPath === 'shortcuts') {
       return `nav[aria-label="スペース ナビゲーション"] li:has([data-testid="horizontal-nav-shortcuts-tab.dropdown-menu-trigger"]) { display: none !important; }`;
@@ -202,22 +166,21 @@ function injectHideTabsStyle(hiddenTabs: string[]): void {
     }
     return `nav[aria-label="スペース ナビゲーション"] li:has(a[href$="/${tabPath}"]) { display: none !important; }`;
   }).join('\n');
-
-  style.textContent = cssRules;
-  document.head.appendChild(style);
-  console.log('[Copy as Markdown] Hide tabs style injected for:', hiddenTabs);
 }
 
-function removeHideTabsStyle(): void {
-  const style = document.getElementById(HIDE_TABS_STYLE_ID);
-  if (style) {
-    style.remove();
-    console.log('[Copy as Markdown] Hide tabs style removed');
+function updateHiddenTabsStyle(hiddenTabs: string[]): void {
+  removeStyle(HIDE_TABS_STYLE_ID, 'Hide tabs');
+  const css = generateHiddenTabsCss(hiddenTabs);
+  if (css) {
+    injectStyle(HIDE_TABS_STYLE_ID, css, 'Hide tabs');
   }
 }
 
+// =============================================================================
+// Click Handlers for Open in New Window
+// =============================================================================
+
 function findIssueUrl(card: Element): string | null {
-  // Find the issue link within the same card container
   const container = card.closest('[data-testid*="software-backlog.card-list.card"]');
   if (!container) {
     return null;
@@ -231,7 +194,6 @@ function findIssueUrl(card: Element): string | null {
   // Fallback: extract issue key from aria-label
   const ariaLabel = card.getAttribute('aria-label');
   if (ariaLabel) {
-    // aria-label format: "SCRUM-1 JIRAのバックログの構造を調べる。..."
     const match = ariaLabel.match(/^([A-Z]+-\d+)/);
     if (match) {
       return `/browse/${match[1]}`;
@@ -242,185 +204,107 @@ function findIssueUrl(card: Element): string | null {
 }
 
 function findTimelineIssueUrl(row: Element): string | null {
-  // Find the issue link within the timeline row
   const link = row.querySelector(TIMELINE_LINK_SELECTOR) as HTMLAnchorElement | null;
-  if (link?.href) {
-    return link.href;
-  }
-  return null;
+  return link?.href ?? null;
 }
 
 function handleCardClick(event: MouseEvent): void {
-  console.log('[Copy as Markdown] Click event captured');
   const target = event.target as Element;
   const card = target.closest(CARD_SELECTOR);
 
   if (!card) {
-    console.log('[Copy as Markdown] No card found for target:', target.tagName, target.className);
     return;
   }
 
-  console.log('[Copy as Markdown] Card found:', card.getAttribute('aria-label'));
   const issueUrl = findIssueUrl(card);
   if (!issueUrl) {
-    console.log('[Copy as Markdown] No issue URL found');
     return;
   }
 
-  console.log('[Copy as Markdown] Opening issue:', issueUrl);
-
-  // Prevent default click behavior
+  console.log('[Copy as Markdown] Opening backlog issue:', issueUrl);
   event.preventDefault();
   event.stopPropagation();
-
-  // Open in new window/tab
   window.open(issueUrl, '_blank');
 }
 
 function handleTimelineRowClick(event: MouseEvent): void {
-  console.log('[Copy as Markdown] Timeline click event captured');
   const target = event.target as Element;
   const row = target.closest(TIMELINE_ROW_SELECTOR);
 
   if (!row) {
-    console.log('[Copy as Markdown] No timeline row found for target:', target.tagName, target.className);
     return;
   }
 
-  console.log('[Copy as Markdown] Timeline row found:', row.getAttribute('data-testid'));
   const issueUrl = findTimelineIssueUrl(row);
   if (!issueUrl) {
-    console.log('[Copy as Markdown] No issue URL found in timeline row');
     return;
   }
 
-  console.log('[Copy as Markdown] Opening issue from timeline:', issueUrl);
-
-  // Prevent default click behavior
+  console.log('[Copy as Markdown] Opening timeline issue:', issueUrl);
   event.preventDefault();
   event.stopPropagation();
-
-  // Open in new window/tab
   window.open(issueUrl, '_blank');
 }
 
-function attachClickListener(): void {
-  // Use capture phase to intercept before JIRA's handlers
-  document.addEventListener('click', handleCardClick, { capture: true });
-  console.log('[Copy as Markdown] Backlog click listener attached');
-}
-
-function attachTimelineClickListener(): void {
-  // Use capture phase to intercept before JIRA's handlers
-  document.addEventListener('click', handleTimelineRowClick, { capture: true });
-  console.log('[Copy as Markdown] Timeline click listener attached');
-}
-
-function observeDynamicContent(): void {
-  // MutationObserver is not strictly needed since we use event delegation,
-  // but we keep it for potential future enhancements
-  const observer = new MutationObserver(() => {
-    // Event delegation handles dynamic content automatically
-  });
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true,
-  });
-}
+// =============================================================================
+// Initialization
+// =============================================================================
 
 async function init(): Promise<void> {
   console.log('[Copy as Markdown] init() called');
 
-  // Handle backlog open in new window feature
-  const openInNewWindowEnabled = await isOpenInNewWindowEnabled();
-  if (openInNewWindowEnabled) {
-    attachClickListener();
-    observeDynamicContent();
-    console.log('[Copy as Markdown] JIRA backlog open in new window enabled');
-  } else {
-    console.log('[Copy as Markdown] Backlog open in new window feature is disabled');
+  // Handle "open in new window" features
+  const backlogOpenEnabled = await getBooleanSetting(SETTING_KEY_BACKLOG_OPEN_NEW_WINDOW, 'backlog open in new window');
+  if (backlogOpenEnabled) {
+    document.addEventListener('click', handleCardClick, { capture: true });
+    console.log('[Copy as Markdown] Backlog click listener attached');
   }
 
-  // Handle timeline open in new window feature
-  const timelineOpenInNewWindowEnabled = await isTimelineOpenInNewWindowEnabled();
-  if (timelineOpenInNewWindowEnabled) {
-    attachTimelineClickListener();
-    observeDynamicContent();
-    console.log('[Copy as Markdown] JIRA timeline open in new window enabled');
-  } else {
-    console.log('[Copy as Markdown] Timeline open in new window feature is disabled');
+  const timelineOpenEnabled = await getBooleanSetting(SETTING_KEY_TIMELINE_OPEN_NEW_WINDOW, 'timeline open in new window');
+  if (timelineOpenEnabled) {
+    document.addEventListener('click', handleTimelineRowClick, { capture: true });
+    console.log('[Copy as Markdown] Timeline click listener attached');
   }
 
-  // Handle hide create button feature
-  const hideCreateButtonEnabled = await isHideCreateButtonEnabled();
-  if (hideCreateButtonEnabled) {
-    injectHideCreateButtonStyle();
-  } else {
-    removeHideCreateButtonStyle();
+  // Handle style toggle features
+  for (const config of STYLE_CONFIGS) {
+    const enabled = await getBooleanSetting(config.settingKey, config.logName);
+    toggleStyle(config.styleId, config.css, config.logName, enabled);
   }
 
-  // Handle hide estimate field feature
-  const hideEstimateFieldEnabled = await isHideEstimateFieldEnabled();
-  if (hideEstimateFieldEnabled) {
-    injectHideEstimateFieldStyle();
-  } else {
-    removeHideEstimateFieldStyle();
-  }
-
-  // Handle hide epic field feature
-  const hideEpicFieldEnabled = await isHideEpicFieldEnabled();
-  if (hideEpicFieldEnabled) {
-    injectHideEpicFieldStyle();
-  } else {
-    removeHideEpicFieldStyle();
-  }
-
-  // Handle hide space navigation tabs feature
-  const hiddenTabs = await getHiddenTabs();
-  injectHideTabsStyle(hiddenTabs);
+  // Handle hidden tabs (special case with dynamic CSS)
+  const hiddenTabs = await getArraySetting(SETTING_KEY_HIDDEN_TABS, 'hidden tabs');
+  updateHiddenTabsStyle(hiddenTabs);
 }
 
-// Listen for settings changes
+// =============================================================================
+// Settings Change Listener
+// =============================================================================
+
 browser.storage.sync.onChanged.addListener((changes) => {
-  if (SETTING_KEY in changes || TIMELINE_SETTING_KEY in changes) {
-    // Reload page to apply new setting
-    // (simpler than managing listener state)
+  // "Open in new window" settings require page reload
+  if (SETTING_KEY_BACKLOG_OPEN_NEW_WINDOW in changes || SETTING_KEY_TIMELINE_OPEN_NEW_WINDOW in changes) {
     window.location.reload();
+    return;
   }
 
-  if (HIDE_CREATE_SETTING_KEY in changes) {
-    const newValue = changes[HIDE_CREATE_SETTING_KEY].newValue as boolean;
-    if (newValue) {
-      injectHideCreateButtonStyle();
-    } else {
-      removeHideCreateButtonStyle();
+  // Handle style toggle settings
+  for (const config of STYLE_CONFIGS) {
+    const change = changes[config.settingKey];
+    if (change) {
+      toggleStyle(config.styleId, config.css, config.logName, change.newValue as boolean);
     }
   }
 
-  if (HIDE_ESTIMATE_SETTING_KEY in changes) {
-    const newValue = changes[HIDE_ESTIMATE_SETTING_KEY].newValue as boolean;
-    if (newValue) {
-      injectHideEstimateFieldStyle();
-    } else {
-      removeHideEstimateFieldStyle();
-    }
-  }
-
-  if (HIDE_EPIC_SETTING_KEY in changes) {
-    const newValue = changes[HIDE_EPIC_SETTING_KEY].newValue as boolean;
-    if (newValue) {
-      injectHideEpicFieldStyle();
-    } else {
-      removeHideEpicFieldStyle();
-    }
-  }
-
-  if (HIDDEN_TABS_SETTING_KEY in changes) {
-    const newValue = changes[HIDDEN_TABS_SETTING_KEY].newValue as string[];
-    injectHideTabsStyle(newValue);
+  // Handle hidden tabs setting
+  const hiddenTabsChange = changes[SETTING_KEY_HIDDEN_TABS];
+  if (hiddenTabsChange) {
+    updateHiddenTabsStyle(hiddenTabsChange.newValue as string[]);
   }
 });
 
+// =============================================================================
 // Start
+// =============================================================================
+
 init();
