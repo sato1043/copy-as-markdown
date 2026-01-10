@@ -180,6 +180,29 @@ function updateHiddenTabsStyle(hiddenTabs: string[]): void {
 // Click Handlers for Open in New Window
 // =============================================================================
 
+let backlogClickListenerAttached = false;
+let timelineClickListenerAttached = false;
+
+function toggleBacklogClickListener(enabled: boolean): void {
+  if (enabled && !backlogClickListenerAttached) {
+    document.addEventListener('click', handleCardClick, { capture: true });
+    backlogClickListenerAttached = true;
+  } else if (!enabled && backlogClickListenerAttached) {
+    document.removeEventListener('click', handleCardClick, { capture: true });
+    backlogClickListenerAttached = false;
+  }
+}
+
+function toggleTimelineClickListener(enabled: boolean): void {
+  if (enabled && !timelineClickListenerAttached) {
+    document.addEventListener('click', handleTimelineRowClick, { capture: true });
+    timelineClickListenerAttached = true;
+  } else if (!enabled && timelineClickListenerAttached) {
+    document.removeEventListener('click', handleTimelineRowClick, { capture: true });
+    timelineClickListenerAttached = false;
+  }
+}
+
 function findIssueUrl(card: Element): string | null {
   const container = card.closest('[data-testid*="software-backlog.card-list.card"]');
   if (!container) {
@@ -255,16 +278,10 @@ async function init(): Promise<void> {
 
   // Handle "open in new window" features
   const backlogOpenEnabled = await getBooleanSetting(SETTING_KEY_BACKLOG_OPEN_NEW_WINDOW, 'backlog open in new window');
-  if (backlogOpenEnabled) {
-    document.addEventListener('click', handleCardClick, { capture: true });
-    console.log('[Copy as Markdown] Backlog click listener attached');
-  }
+  toggleBacklogClickListener(backlogOpenEnabled);
 
   const timelineOpenEnabled = await getBooleanSetting(SETTING_KEY_TIMELINE_OPEN_NEW_WINDOW, 'timeline open in new window');
-  if (timelineOpenEnabled) {
-    document.addEventListener('click', handleTimelineRowClick, { capture: true });
-    console.log('[Copy as Markdown] Timeline click listener attached');
-  }
+  toggleTimelineClickListener(timelineOpenEnabled);
 
   // Handle style toggle features
   for (const config of STYLE_CONFIGS) {
@@ -282,10 +299,15 @@ async function init(): Promise<void> {
 // =============================================================================
 
 browser.storage.sync.onChanged.addListener((changes) => {
-  // "Open in new window" settings require page reload
-  if (SETTING_KEY_BACKLOG_OPEN_NEW_WINDOW in changes || SETTING_KEY_TIMELINE_OPEN_NEW_WINDOW in changes) {
-    window.location.reload();
-    return;
+  // Handle "open in new window" settings
+  const backlogChange = changes[SETTING_KEY_BACKLOG_OPEN_NEW_WINDOW];
+  if (backlogChange) {
+    toggleBacklogClickListener(backlogChange.newValue as boolean);
+  }
+
+  const timelineChange = changes[SETTING_KEY_TIMELINE_OPEN_NEW_WINDOW];
+  if (timelineChange) {
+    toggleTimelineClickListener(timelineChange.newValue as boolean);
   }
 
   // Handle style toggle settings
