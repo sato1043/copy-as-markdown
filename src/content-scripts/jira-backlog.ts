@@ -170,6 +170,10 @@ function generateHiddenTabsCss(hiddenTabs: string[]): string {
     if (tabPath === 'release-page') {
       return `nav[aria-label="スペース ナビゲーション"] li:has(a[href*="release-page"]) { display: none !important; }`;
     }
+    // backlog-prioritization is in query parameter, so use contains selector
+    if (tabPath === 'backlog-prioritization') {
+      return `nav[aria-label="スペース ナビゲーション"] li:has(a[href*="backlog-prioritization"]) { display: none !important; }`;
+    }
     return `nav[aria-label="スペース ナビゲーション"] li:has(a[href$="/${tabPath}"]) { display: none !important; }`;
   }).join('\n');
 }
