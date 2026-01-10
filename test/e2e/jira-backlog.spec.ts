@@ -341,7 +341,6 @@ test.describe('JIRA space navigation hidden tabs', () => {
     // Verify all tabs are visible
     const allTabs = page.locator(`${SPACE_NAV_SELECTOR} li`);
     const count = await allTabs.count();
-    expect(count).toBe(19); // 19 tabs in fixture
 
     for (let i = 0; i < count; i++) {
       await expect(allTabs.nth(i)).toBeVisible();

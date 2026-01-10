@@ -166,6 +166,10 @@ function generateHiddenTabsCss(hiddenTabs: string[]): string {
     if (tabPath === 'boards') {
       return `nav[aria-label="スペース ナビゲーション"] li:has(a[href*="/boards/"]):not(:has(a[href$="/backlog"])):not(:has(a[href$="/timeline"])):not(:has(a[href$="/calendar"])):not(:has(a[href$="/reports"])) { display: none !important; }`;
     }
+    // release-page is in query parameter, so use contains selector
+    if (tabPath === 'release-page') {
+      return `nav[aria-label="スペース ナビゲーション"] li:has(a[href*="release-page"]) { display: none !important; }`;
+    }
     return `nav[aria-label="スペース ナビゲーション"] li:has(a[href$="/${tabPath}"]) { display: none !important; }`;
   }).join('\n');
 }
