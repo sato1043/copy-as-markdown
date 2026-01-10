@@ -307,10 +307,10 @@ test.describe('JIRA space navigation hidden tabs', () => {
     await page.goto(JIRA_BACKLOG_FIXTURE);
     await page.waitForLoadState('networkidle');
 
-    // Inject the CSS hiding logic for boards (excluding backlog/timeline/calendar)
+    // Inject the CSS hiding logic for boards (excluding backlog/timeline/calendar/reports)
     await page.evaluate((navSelector) => {
       const style = document.createElement('style');
-      style.textContent = `${navSelector} li:has(a[href*="/boards/"]):not(:has(a[href$="/backlog"])):not(:has(a[href$="/timeline"])):not(:has(a[href$="/calendar"])) { display: none !important; }`;
+      style.textContent = `${navSelector} li:has(a[href*="/boards/"]):not(:has(a[href$="/backlog"])):not(:has(a[href$="/timeline"])):not(:has(a[href$="/calendar"])):not(:has(a[href$="/reports"])) { display: none !important; }`;
       document.head.appendChild(style);
     }, SPACE_NAV_SELECTOR);
 
@@ -318,13 +318,15 @@ test.describe('JIRA space navigation hidden tabs', () => {
     const boardsTab = page.locator(`${SPACE_NAV_SELECTOR} li:has(a[href$="/boards/1"]):not(:has(a[href$="/backlog"]))`);
     await expect(boardsTab).toBeHidden();
 
-    // Verify backlog, timeline, calendar tabs are still visible
+    // Verify backlog, timeline, calendar, reports tabs are still visible
     const backlogTab = page.locator(`${SPACE_NAV_SELECTOR} li:has(a[href$="/backlog"])`);
     const timelineTab = page.locator(`${SPACE_NAV_SELECTOR} li:has(a[href$="/timeline"])`);
     const calendarTab = page.locator(`${SPACE_NAV_SELECTOR} li:has(a[href$="/calendar"])`);
+    const reportsTab = page.locator(`${SPACE_NAV_SELECTOR} li:has(a[href$="/reports"])`);
     await expect(backlogTab).toBeVisible();
     await expect(timelineTab).toBeVisible();
     await expect(calendarTab).toBeVisible();
+    await expect(reportsTab).toBeVisible();
   });
 
   test('shows all tabs when hiddenTabs is empty', async ({ page, serviceWorker }) => {
@@ -339,7 +341,7 @@ test.describe('JIRA space navigation hidden tabs', () => {
     // Verify all tabs are visible
     const allTabs = page.locator(`${SPACE_NAV_SELECTOR} li`);
     const count = await allTabs.count();
-    expect(count).toBe(18); // 18 tabs in fixture
+    expect(count).toBe(19); // 19 tabs in fixture
 
     for (let i = 0; i < count; i++) {
       await expect(allTabs.nth(i)).toBeVisible();

@@ -162,9 +162,9 @@ function generateHiddenTabsCss(hiddenTabs: string[]): string {
     if (tabPath === 'addtabs') {
       return `nav[aria-label="スペース ナビゲーション"] [data-testid="navigation-kit-add-tab.ui.trigger"] { display: none !important; }`;
     }
-    // boards URL is /boards/N, but backlog/timeline/calendar are /boards/N/xxx, so exclude them
+    // boards URL is /boards/N, but backlog/timeline/calendar/reports are /boards/N/xxx, so exclude them
     if (tabPath === 'boards') {
-      return `nav[aria-label="スペース ナビゲーション"] li:has(a[href*="/boards/"]):not(:has(a[href$="/backlog"])):not(:has(a[href$="/timeline"])):not(:has(a[href$="/calendar"])) { display: none !important; }`;
+      return `nav[aria-label="スペース ナビゲーション"] li:has(a[href*="/boards/"]):not(:has(a[href$="/backlog"])):not(:has(a[href$="/timeline"])):not(:has(a[href$="/calendar"])):not(:has(a[href$="/reports"])) { display: none !important; }`;
     }
     return `nav[aria-label="スペース ナビゲーション"] li:has(a[href$="/${tabPath}"]) { display: none !important; }`;
   }).join('\n');
