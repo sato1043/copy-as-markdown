@@ -58,6 +58,18 @@ async function loadSettings(): Promise<void> {
       });
     }
 
+    const formJiraExtractBracketedPrefix = document.forms.namedItem('form-jira-extract-bracketed-prefix');
+    if (formJiraExtractBracketedPrefix) {
+      const checkbox = formJiraExtractBracketedPrefix.elements.namedItem('jiraExtractBracketedPrefix') as HTMLInputElement | null;
+      if (checkbox) checkbox.checked = settings.jiraExtractBracketedPrefix;
+    }
+
+    const formJiraTrimTitleTrailingSuffix = document.forms.namedItem('form-jira-trim-title-trailing-suffix');
+    if (formJiraTrimTitleTrailingSuffix) {
+      const checkbox = formJiraTrimTitleTrailingSuffix.elements.namedItem('jiraTrimTitleTrailingSuffix') as HTMLInputElement | null;
+      if (checkbox) checkbox.checked = settings.jiraTrimTitleTrailingSuffix;
+    }
+
     hideFlash();
   } catch (error) {
     console.error('error getting settings', error);
@@ -146,6 +158,34 @@ if (formHiddenTabs) {
       const checkboxes = formHiddenTabs.querySelectorAll<HTMLInputElement>('input[name="hiddenTab"]:checked');
       const hiddenTabs = Array.from(checkboxes).map(cb => cb.value);
       await Settings.setJiraSpaceNavHiddenTabs(hiddenTabs);
+      hideFlash();
+    } catch (error) {
+      console.error('failed to save settings:', error);
+      showFlash('Failed to save setting. Please try again.');
+    }
+  });
+}
+
+const formJiraExtractBracketedPrefix = document.forms.namedItem('form-jira-extract-bracketed-prefix');
+if (formJiraExtractBracketedPrefix) {
+  formJiraExtractBracketedPrefix.addEventListener('change', async (event) => {
+    try {
+      const target = event.target as HTMLInputElement;
+      await Settings.setJiraExtractBracketedPrefix(target.checked);
+      hideFlash();
+    } catch (error) {
+      console.error('failed to save settings:', error);
+      showFlash('Failed to save setting. Please try again.');
+    }
+  });
+}
+
+const formJiraTrimTitleTrailingSuffix = document.forms.namedItem('form-jira-trim-title-trailing-suffix');
+if (formJiraTrimTitleTrailingSuffix) {
+  formJiraTrimTitleTrailingSuffix.addEventListener('change', async (event) => {
+    try {
+      const target = event.target as HTMLInputElement;
+      await Settings.setJiraTrimTitleTrailingSuffix(target.checked);
       hideFlash();
     } catch (error) {
       console.error('failed to save settings:', error);

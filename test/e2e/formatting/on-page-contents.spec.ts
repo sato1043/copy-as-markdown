@@ -86,12 +86,12 @@ test.describe('On-Page contents', () => {
   });
 });
 
-test.describe('Bracketed prefix extraction', () => {
+test.describe('JIRA Bracketed prefix extraction', () => {
   test.beforeEach(async ({ page, serviceWorker }) => {
     await resetMockClipboard(serviceWorker);
-    // Enable bracketed prefix extraction setting (default is false)
+    // Enable JIRA bracketed prefix extraction setting (default is false)
     await serviceWorker.evaluate(async () => {
-      await chrome.storage.sync.set({ extractBracketedPrefix: true });
+      await chrome.storage.sync.set({ jiraExtractBracketedPrefix: true });
     });
     // Wait for settings to be applied
     await page.waitForTimeout(100);
@@ -109,14 +109,14 @@ test.describe('Bracketed prefix extraction', () => {
   });
 });
 
-test.describe('Title trailing suffix removal with bracketed prefix extraction', () => {
+test.describe('JIRA Title trailing suffix removal with bracketed prefix extraction', () => {
   test.beforeEach(async ({ page, serviceWorker }) => {
     await resetMockClipboard(serviceWorker);
-    // Enable both settings
+    // Enable both JIRA settings
     await serviceWorker.evaluate(async () => {
       await chrome.storage.sync.set({
-        extractBracketedPrefix: true,
-        trimTitleTrailingSuffix: true,
+        jiraExtractBracketedPrefix: true,
+        jiraTrimTitleTrailingSuffix: true,
       });
     });
     // Wait for settings to be applied

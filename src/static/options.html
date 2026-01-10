@@ -111,29 +111,6 @@
           </p>
         </form>
 
-        <form id="form-extract-bracketed-prefix" class="field">
-          <label class="label">Bracketed Prefix Extraction</label>
-          <div class="control">
-            <label class="checkbox"><input type="checkbox" name="extractBracketedPrefix"/> Extract bracketed prefix from page title</label>
-          </div>
-          <p class="help">
-            When enabled, if a page title starts with <code>[xxx]</code> (e.g. <code>[JIRA-1234] Some Feature Title</code>),
-            the bracketed text becomes the link text and the remainder is appended as plain text:
-            <code>[JIRA-1234](url) Some Feature Title</code>
-          </p>
-        </form>
-
-        <form id="form-trim-title-trailing-suffix" class="field">
-          <label class="label">Title Trailing Suffix Removal</label>
-          <div class="control">
-            <label class="checkbox"><input type="checkbox" name="trimTitleTrailingSuffix"/> Remove trailing suffix from page title</label>
-          </div>
-          <p class="help">
-            When enabled, the last occurrence of <code> - xxx</code> pattern is removed from the page title.
-            For example, <code>Article Title - Site Name</code> becomes <code>[Article Title](url)</code>.
-            This is applied before bracketed prefix extraction.
-          </p>
-        </form>
       </div>
       <div class="field is-grouped">
         <div class="control">

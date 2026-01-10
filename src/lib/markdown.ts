@@ -15,8 +15,8 @@ export default class Markdown {
   alwaysEscapeLinkBracket: boolean;
   unorderedListStyle: UnorderedListStyle;
   indentationStyle: TabGroupIndentationStyle;
-  extractBracketedPrefix: boolean;
-  trimTitleTrailingSuffix: boolean;
+  jiraExtractBracketedPrefix: boolean;
+  jiraTrimTitleTrailingSuffix: boolean;
 
   static DefaultTitle(): string {
     return '(No Title)';
@@ -26,14 +26,20 @@ export default class Markdown {
     alwaysEscapeLinkBracket = false,
     unorderedListStyle = UnorderedListStyle.Dash,
     indentationStyle = TabGroupIndentationStyle.Spaces,
-    extractBracketedPrefix = false,
-    trimTitleTrailingSuffix = false,
+    jiraExtractBracketedPrefix = false,
+    jiraTrimTitleTrailingSuffix = false,
   } = {}) {
     this.alwaysEscapeLinkBracket = alwaysEscapeLinkBracket;
     this.unorderedListStyle = unorderedListStyle;
     this.indentationStyle = indentationStyle;
-    this.extractBracketedPrefix = extractBracketedPrefix;
-    this.trimTitleTrailingSuffix = trimTitleTrailingSuffix;
+    this.jiraExtractBracketedPrefix = jiraExtractBracketedPrefix;
+    this.jiraTrimTitleTrailingSuffix = jiraTrimTitleTrailingSuffix;
+  }
+
+  private isJiraUrl(url: string): boolean {
+    // Production: *.atlassian.net
+    // Development/Test: localhost
+    return /\.atlassian\.net\//.test(url) || /^https?:\/\/localhost[:/]/.test(url);
   }
 
   /**
@@ -125,19 +131,24 @@ export default class Markdown {
       return `[${Markdown.DefaultTitle()}](${url})`;
     }
 
-    // サフィックス削除: 最後の " - xxx" パターンを除去
-    // 例: "記事タイトル - サイト名" → "記事タイトル"
+    // JIRA サイトの場合のみ設定を適用
+    const isJira = this.isJiraUrl(url);
+
     let processedTitle = title;
-    if (this.trimTitleTrailingSuffix) {
+
+    // サフィックス削除（JIRA のみ）: 最後の " - xxx" パターンを除去
+    // 例: "記事タイトル - サイト名" → "記事タイトル"
+    if (isJira && this.jiraTrimTitleTrailingSuffix) {
       processedTitle = title.replace(/\s+-\s[^-]*$/, '').trim();
       if (processedTitle === '') {
         return `[${Markdown.DefaultTitle()}](${url})`;
       }
     }
 
-    if (this.extractBracketedPrefix) {
-      // 先頭の [xxx] パターンを抽出し、残りをテキストとして追加
-      // 例: [JIRA-1234] Some Feature Title → [JIRA-1234](url) Some Feature Title
+    // プレフィックス抽出（JIRA のみ）
+    // 先頭の [xxx] パターンを抽出し、残りをテキストとして追加
+    // 例: [JIRA-1234] Some Feature Title → [JIRA-1234](url) Some Feature Title
+    if (isJira && this.jiraExtractBracketedPrefix) {
       const pattern = /^\[([^\]]+)\]\s*(.*)/;
       const match = processedTitle.match(pattern);
       if (match && match[1]) {

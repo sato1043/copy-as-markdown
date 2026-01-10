@@ -85,8 +85,8 @@ async function refreshMarkdownInstance(): Promise<void> {
   markdownInstance.alwaysEscapeLinkBracket = settings.alwaysEscapeLinkBrackets;
   markdownInstance.unorderedListStyle = settings.styleOfUnorderedList;
   markdownInstance.indentationStyle = settings.styleOfTabGroupIndentation;
-  markdownInstance.extractBracketedPrefix = settings.extractBracketedPrefix;
-  markdownInstance.trimTitleTrailingSuffix = settings.trimTitleTrailingSuffix;
+  markdownInstance.jiraExtractBracketedPrefix = settings.jiraExtractBracketedPrefix;
+  markdownInstance.jiraTrimTitleTrailingSuffix = settings.jiraTrimTitleTrailingSuffix;
 }
 
 browser.alarms.onAlarm.addListener(async (alarm) => {

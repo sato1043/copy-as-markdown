@@ -5,8 +5,8 @@ const SKLinkTextAlwaysEscapeBrackets = 'linkTextAlwaysEscapeBrackets';
 // [sic.] The following keys have spaces at the end since they were introduced (typo). Do not modify.
 const SKStyleOfUnorderedList = 'styleOfUnorderedList ';
 const SKStyleTabGroupIndentation = 'style.tabgroup.indentation ';
-const SKExtractBracketedPrefix = 'extractBracketedPrefix';
-const SKTrimTitleTrailingSuffix = 'trimTitleTrailingSuffix';
+const SKJiraExtractBracketedPrefix = 'jiraExtractBracketedPrefix';
+const SKJiraTrimTitleTrailingSuffix = 'jiraTrimTitleTrailingSuffix';
 const SKJiraBacklogOpenDetailInNewWindow = 'jiraBacklogOpenDetailInNewWindow';
 const SKJiraBacklogHideCreateButton = 'jiraBacklogHideCreateButton';
 const SKJiraBacklogHideEstimateField = 'jiraBacklogHideEstimateField';
@@ -18,8 +18,8 @@ interface Settings {
   alwaysEscapeLinkBrackets: boolean;
   styleOfUnorderedList: UnorderedListStyle;
   styleOfTabGroupIndentation: TabGroupIndentationStyle;
-  extractBracketedPrefix: boolean;
-  trimTitleTrailingSuffix: boolean;
+  jiraExtractBracketedPrefix: boolean;
+  jiraTrimTitleTrailingSuffix: boolean;
   jiraBacklogOpenDetailInNewWindow: boolean;
   jiraBacklogHideCreateButton: boolean;
   jiraBacklogHideEstimateField: boolean;
@@ -35,8 +35,8 @@ export default {
   SKLinkTextAlwaysEscapeBrackets,
   SKStyleOfUnorderedList,
   SKStyleTabGroupIndentation,
-  SKExtractBracketedPrefix,
-  SKTrimTitleTrailingSuffix,
+  SKJiraExtractBracketedPrefix,
+  SKJiraTrimTitleTrailingSuffix,
   SKJiraBacklogOpenDetailInNewWindow,
   SKJiraBacklogHideCreateButton,
   SKJiraBacklogHideEstimateField,
@@ -49,8 +49,8 @@ export default {
       [SKLinkTextAlwaysEscapeBrackets]: false,
       [SKStyleOfUnorderedList]: UnorderedListStyle.Dash,
       [SKStyleTabGroupIndentation]: TabGroupIndentationStyle.Spaces,
-      [SKExtractBracketedPrefix]: false,
-      [SKTrimTitleTrailingSuffix]: false,
+      [SKJiraExtractBracketedPrefix]: false,
+      [SKJiraTrimTitleTrailingSuffix]: false,
       [SKJiraBacklogOpenDetailInNewWindow]: false,
       [SKJiraBacklogHideCreateButton]: false,
       [SKJiraBacklogHideEstimateField]: false,
@@ -82,15 +82,15 @@ export default {
     });
   },
 
-  async setExtractBracketedPrefix(value: boolean): Promise<void> {
+  async setJiraExtractBracketedPrefix(value: boolean): Promise<void> {
     await browser.storage.sync.set({
-      [SKExtractBracketedPrefix]: value,
+      [SKJiraExtractBracketedPrefix]: value,
     });
   },
 
-  async setTrimTitleTrailingSuffix(value: boolean): Promise<void> {
+  async setJiraTrimTitleTrailingSuffix(value: boolean): Promise<void> {
     await browser.storage.sync.set({
-      [SKTrimTitleTrailingSuffix]: value,
+      [SKJiraTrimTitleTrailingSuffix]: value,
     });
   },
 
@@ -141,8 +141,8 @@ export default {
       alwaysEscapeLinkBrackets: all[SKLinkTextAlwaysEscapeBrackets] as boolean,
       styleOfUnorderedList: all[SKStyleOfUnorderedList] as UnorderedListStyle,
       styleOfTabGroupIndentation: all[SKStyleTabGroupIndentation] as TabGroupIndentationStyle,
-      extractBracketedPrefix: all[SKExtractBracketedPrefix] as boolean,
-      trimTitleTrailingSuffix: all[SKTrimTitleTrailingSuffix] as boolean,
+      jiraExtractBracketedPrefix: all[SKJiraExtractBracketedPrefix] as boolean,
+      jiraTrimTitleTrailingSuffix: all[SKJiraTrimTitleTrailingSuffix] as boolean,
       jiraBacklogOpenDetailInNewWindow: all[SKJiraBacklogOpenDetailInNewWindow] as boolean,
       jiraBacklogHideCreateButton: all[SKJiraBacklogHideCreateButton] as boolean,
       jiraBacklogHideEstimateField: all[SKJiraBacklogHideEstimateField] as boolean,

@@ -52,6 +52,29 @@
     <div class="column">
       <div class="box content">
         <h2 class="title is-3">JIRA Settings</h2>
+        <h3 class="title is-4">Copying current tab link</h3>
+        <form id="form-jira-extract-bracketed-prefix" class="field">
+          <div class="control">
+            <label class="checkbox"><input type="checkbox" name="jiraExtractBracketedPrefix"/> Extract bracketed prefix from page title</label>
+          </div>
+          <p class="help">
+            If a page title starts with <code>[xxx]</code> (e.g. <code>[JIRA-1234] Some Feature Title</code>),
+            the bracketed text becomes the link text and the remainder is appended as plain text:
+            <code>[JIRA-1234](url) Some Feature Title</code>
+          </p>
+        </form>
+        <form id="form-jira-trim-title-trailing-suffix" class="field">
+          <div class="control">
+            <label class="checkbox"><input type="checkbox" name="jiraTrimTitleTrailingSuffix"/> Remove trailing suffix from page title</label>
+          </div>
+          <p class="help">
+            Removes the last occurrence of <code> - xxx</code> pattern from the page title.
+            For example, <code>Article Title - Jira</code> becomes <code>[Article Title](url)</code>.
+            This is applied before bracketed prefix extraction.
+          </p>
+        </form>
+        <hr/>
+        <h3 class="title is-4">Issue detail behavior</h3>
         <form id="form-jira-timeline-open-detail-in-new-window" class="field">
           <label class="label">Timeline Issue Behavior</label>
           <div class="control">
