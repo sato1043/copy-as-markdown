@@ -50,6 +50,12 @@ async function loadSettings(): Promise<void> {
       if (checkbox) checkbox.checked = settings.jiraBacklogHideEpicField;
     }
 
+    const formHideColumnsOnTitleHover = document.forms.namedItem('form-jira-backlog-hide-columns-on-title-hover');
+    if (formHideColumnsOnTitleHover) {
+      const checkbox = formHideColumnsOnTitleHover.elements.namedItem('jiraBacklogHideColumnsOnTitleHover') as HTMLInputElement | null;
+      if (checkbox) checkbox.checked = settings.jiraBacklogHideColumnsOnTitleHover;
+    }
+
     const formHiddenTabs = document.forms.namedItem('form-jira-space-nav-hidden-tabs');
     if (formHiddenTabs) {
       const checkboxes = formHiddenTabs.querySelectorAll<HTMLInputElement>('input[name="hiddenTab"]');
@@ -143,6 +149,20 @@ if (formHideEpicField) {
     try {
       const target = event.target as HTMLInputElement;
       await Settings.setJiraBacklogHideEpicField(target.checked);
+      hideFlash();
+    } catch (error) {
+      console.error('failed to save settings:', error);
+      showFlash('Failed to save setting. Please try again.');
+    }
+  });
+}
+
+const formHideColumnsOnTitleHover = document.forms.namedItem('form-jira-backlog-hide-columns-on-title-hover');
+if (formHideColumnsOnTitleHover) {
+  formHideColumnsOnTitleHover.addEventListener('change', async (event) => {
+    try {
+      const target = event.target as HTMLInputElement;
+      await Settings.setJiraBacklogHideColumnsOnTitleHover(target.checked);
       hideFlash();
     } catch (error) {
       console.error('failed to save settings:', error);

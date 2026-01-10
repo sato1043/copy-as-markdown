@@ -34,6 +34,7 @@ const SETTING_KEY_TIMELINE_OPEN_NEW_WINDOW = 'jiraTimelineOpenDetailInNewWindow'
 const SETTING_KEY_HIDE_CREATE_BUTTON = 'jiraBacklogHideCreateButton';
 const SETTING_KEY_HIDE_ESTIMATE_FIELD = 'jiraBacklogHideEstimateField';
 const SETTING_KEY_HIDE_EPIC_FIELD = 'jiraBacklogHideEpicField';
+const SETTING_KEY_HIDE_COLUMNS_ON_TITLE_HOVER = 'jiraBacklogHideColumnsOnTitleHover';
 const SETTING_KEY_HIDDEN_TABS = 'jiraSpaceNavHiddenTabs';
 
 // =============================================================================
@@ -138,6 +139,19 @@ const STYLE_CONFIGS: StyleConfig[] = [
       div:has(> div > div > div > ${EPIC_FIELD_TRIGGER_BUTTON_SELECTOR}) { display: none !important; }
     `,
     logName: 'Hide epic field',
+  },
+  {
+    settingKey: SETTING_KEY_HIDE_COLUMNS_ON_TITLE_HOVER,
+    styleId: 'copy-as-markdown-hide-columns-on-title-hover',
+    css: `
+      div:has(> [data-testid="software-backlog.card-list.card.card-contents.summary"]):has([data-testid="issue-field-summary-inline-edit-link.ui.read.content"]:hover) ~ div {
+        width: 0 !important;
+        min-width: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+      }
+    `,
+    logName: 'Hide columns on title hover',
   },
 ];
 
