@@ -31,7 +31,6 @@ const SETTING_KEY_BACKLOG_OPEN_NEW_WINDOW = 'jiraBacklogOpenDetailInNewWindow';
 const SETTING_KEY_TIMELINE_OPEN_NEW_WINDOW = 'jiraTimelineOpenDetailInNewWindow';
 const SETTING_KEY_HIDE_CREATE_BUTTON = 'jiraBacklogHideCreateButton';
 const SETTING_KEY_HIDE_ESTIMATE_FIELD = 'jiraBacklogHideEstimateField';
-const SETTING_KEY_HIDE_COLUMNS_ON_TITLE_HOVER = 'jiraBacklogHideColumnsOnTitleHover';
 const SETTING_KEY_HIDDEN_TABS = 'jiraSpaceNavHiddenTabs';
 
 // =============================================================================
@@ -127,19 +126,6 @@ const STYLE_CONFIGS: StyleConfig[] = [
     styleId: 'copy-as-markdown-hide-estimate-field',
     css: `div:has(> ${ESTIMATE_FIELD_SELECTOR}) { display: none !important; }`,
     logName: 'Hide estimate field',
-  },
-  {
-    settingKey: SETTING_KEY_HIDE_COLUMNS_ON_TITLE_HOVER,
-    styleId: 'copy-as-markdown-hide-columns-on-title-hover',
-    css: `
-      div:has(> [data-testid="software-backlog.card-list.card.card-contents.summary"]):has([data-testid="issue-field-summary-inline-edit-link.ui.read.content"]:hover) ~ div {
-        width: 0 !important;
-        min-width: 0 !important;
-        padding: 0 !important;
-        overflow: hidden !important;
-      }
-    `,
-    logName: 'Hide columns on title hover',
   },
 ];
 
@@ -262,6 +248,12 @@ function handleCardClick(event: MouseEvent): void {
 
 function handleTimelineRowClick(event: MouseEvent): void {
   const target = event.target as Element;
+
+  // Skip button elements (e.g., expand button) to preserve their default behavior
+  if (target.closest('button')) {
+    return;
+  }
+
   const row = target.closest(TIMELINE_ROW_SELECTOR);
 
   if (!row) {
